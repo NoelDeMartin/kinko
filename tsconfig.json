@@ -1,0 +1,33 @@
+{
+    "compilerOptions": {
+        "lib": [
+            "es2017.object",
+            "es6",
+            "dom"
+        ],
+        "strict": true,
+        "target": "es5",
+        "module": "es2015",
+        "moduleResolution": "node",
+        "isolatedModules": false,
+        "experimentalDecorators": true,
+        "noImplicitThis": true,
+        "strictNullChecks": true,
+        "removeComments": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "allowSyntheticDefaultImports": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "resources/vue/*"
+            ]
+        }
+    },
+    "include": [
+        "resources/vue/**/*.ts",
+        "resources/vue/**/*.vue"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

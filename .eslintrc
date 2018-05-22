@@ -1,0 +1,39 @@
+{
+    "extends": [
+        "standard",
+        "plugin:vue/recommended"
+    ],
+    "plugins": [
+        "babel",
+        "vue"
+    ],
+    "env": {
+        "browser": true,
+        "es6": true
+    },
+    "rules": {
+        "indent": [
+            "error",
+            4,
+            {
+                "SwitchCase": 1
+            }
+        ],
+        "vue/html-indent": [
+            "error",
+            4
+        ],
+        "space-before-function-paren": "off",
+        "semi": [
+            "error",
+            "always"
+        ],
+        "comma-dangle": [
+            "error",
+            "always-multiline"
+        ]
+    },
+    "parserOptions": {
+        "parser": "babel-eslint"
+    }
+}
