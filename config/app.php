@@ -154,11 +154,11 @@ return [
         /*
          * Application Service Providers...
          */
-        App\Providers\AppServiceProvider::class,
-        App\Providers\AuthServiceProvider::class,
-        // App\Providers\BroadcastServiceProvider::class,
-        App\Providers\EventServiceProvider::class,
-        App\Providers\RouteServiceProvider::class,
+        Kinko\Providers\AppServiceProvider::class,
+        Kinko\Providers\AuthServiceProvider::class,
+        // Kinko\Providers\BroadcastServiceProvider::class,
+        Kinko\Providers\EventServiceProvider::class,
+        Kinko\Providers\RouteServiceProvider::class,
 
     ],
 

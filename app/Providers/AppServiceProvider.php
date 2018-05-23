@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Providers;
+namespace Kinko\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
