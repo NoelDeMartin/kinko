@@ -1,0 +1,10 @@
+#!/usr/bin/env python
+
+import os
+import sys
+
+home_path = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '/..')
+argv = map(lambda arg: arg.replace(home_path, '/app'), sys.argv[1:])
+output = os.popen('metal exec --service="kinko" /app/vendor/bin/phpcs -- ' + ' '.join(argv)).read()
+
+print output.replace('\"\\/app', '\"' + home_path.replace('/', '\\/'))

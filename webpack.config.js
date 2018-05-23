@@ -9,6 +9,7 @@ const inProduction = process.env.NODE_ENV === 'production';
 // TODO extract vendors
 // TODO review hot loading
 // TODO implement cache busting
+// TODO implement code splitting (js & css)
 
 module.exports = {
 
