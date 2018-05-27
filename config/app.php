@@ -159,6 +159,7 @@ return [
         // Kinko\Providers\BroadcastServiceProvider::class,
         Kinko\Providers\EventServiceProvider::class,
         Kinko\Providers\RouteServiceProvider::class,
+        Kinko\Providers\NonRelationalDatabaseServiceProvider::class,
 
     ],
 
