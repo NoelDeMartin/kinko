@@ -6,6 +6,7 @@ use Closure;
 use MongoDB\Client;
 use Kinko\Database\NonRelationalConnection;
 use Kinko\Database\MongoDB\Query\Builder as QueryBuilder;
+use Kinko\Database\MongoDB\Query\Grammar as QueryGrammar;
 use Kinko\Database\MongoDB\Schema\Builder as SchemaBuilder;
 use Kinko\Database\MongoDB\Schema\Grammar as SchemaGrammar;
 
@@ -18,6 +19,8 @@ class Connection extends NonRelationalConnection
     protected $schemaBuilder = null;
 
     protected $schemaGrammar = null;
+
+    protected $queryGrammar = null;
 
     public function __construct(array $config)
     {
@@ -48,6 +51,16 @@ class Connection extends NonRelationalConnection
 
         return $this->schemaGrammar;
     }
+
+    public function getQueryGrammar()
+    {
+        if (is_null($this->queryGrammar)) {
+            $this->queryGrammar = new QueryGrammar();
+        }
+
+        return $this->queryGrammar;
+    }
+
 
     public function collection($collection)
     {

@@ -27,6 +27,8 @@ class NonRelationalModel
     protected $primaryKey = '_id';
     protected $keyType = 'objectid';
 
+    protected $resource = null;
+
     protected $connection = null;
 
     protected $collection = null;
@@ -184,6 +186,19 @@ class NonRelationalModel
         return $query;
     }
 
+    public function getResourceClass()
+    {
+        return is_null($this->resource)
+            ? app()->getNamespace() . 'Http\\Resources\\' . class_basename($this)
+            : $this->resource;
+    }
+
+    public function resource()
+    {
+        $class = $this->getResourceClass();
+        return new $class($this);
+    }
+
     /**
      * Get the collection associated with the model.
      *
@@ -329,6 +344,12 @@ class NonRelationalModel
     public static function getConnectionResolver()
     {
         return static::$resolver;
+    }
+
+    // TODO move this to mongo-specific
+    public function getIdAttribute()
+    {
+        return isset($this->attributes['_id'])? $this->attributes['_id'] : null;
     }
 
     /**

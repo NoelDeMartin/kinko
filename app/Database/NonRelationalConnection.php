@@ -35,6 +35,13 @@ abstract class NonRelationalConnection implements ConnectionInterface
      */
     abstract public function getSchemaGrammar();
 
+    /**
+     * Get the schema grammar used by the connection.
+     *
+     * @return \Kinko\Database\Query\Grammars\NonRelationalGrammar
+     */
+    abstract public function getQueryGrammar();
+
     /* These should be removed (forced by ConnectionInterface interface) */
 
     public function table($table)

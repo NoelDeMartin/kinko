@@ -2,7 +2,9 @@
 
 namespace Kinko\Database\Schema\Grammars;
 
-abstract class NonRelationalGrammar
+use Kinko\Database\NonRelationalGrammar as BaseGrammar;
+
+abstract class NonRelationalGrammar extends BaseGrammar
 {
     protected $transactions = false;
 

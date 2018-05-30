@@ -9,5 +9,10 @@
 @stop
 
 @push('scripts')
+    <script>
+        window.Laravel = {
+            user: @json(auth()->user()->resource()),
+        };
+    </script>
     <script src="{{ asset('js/app.js') }}"></script>
 @endpush

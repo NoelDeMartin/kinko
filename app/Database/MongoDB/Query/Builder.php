@@ -21,7 +21,7 @@ class Builder extends NonRelationalBuilder
 
     public function where($field, $value)
     {
-        $this->where[$field] = $value;
+        $this->wheres[$field] = $value;
     }
 
     public function orderBy($field, $direction = 'asc')
