@@ -1,0 +1,26 @@
+{
+    "emmet.syntaxProfiles": {
+        "blade": "html",
+        "vue-html": "html",
+        "vue": "html"
+    },
+    "emmet.includeLanguages": {
+        "blade": "html"
+    },
+    "eslint.validate": [
+        "javascript",
+        "vue"
+    ],
+    "files.associations": {
+        ".stylelintrc": "json"
+    },
+    "files.trimTrailingWhitespace": true,
+    "vsicons.projectDetection.autoReload": true,
+    "workbench.iconTheme": "vscode-icons",
+    "php.suggest.basic": false,
+    "css.validate": false,
+    "scss.validate": false,
+    "vetur.validation.style": false,
+    "stylelint.enable": true,
+    "phpcs.executablePath": "bin/phpcs"
+}
