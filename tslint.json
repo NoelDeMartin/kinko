@@ -9,6 +9,7 @@
         "arrow-parens": false,
         "interface-name": false,
         "no-angle-bracket-type-assertion": false,
+        "object-literal-sort-keys": false,
         "variable-name": [
             true,
             "ban-keywords",

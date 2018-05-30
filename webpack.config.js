@@ -16,7 +16,10 @@ module.exports = {
     entry: {
         app: [
             './resources/vue/app.ts',
-            './resources/vue/app.scss',
+            './resources/styles/app.scss',
+        ],
+        auth: [
+            './resources/styles/auth.scss',
         ],
     },
 
@@ -66,7 +69,7 @@ module.exports = {
                         loader: 'postcss-loader',
                         options: {
                             config: {
-                                path: path.resolve(__dirname, 'resources/vue/styles'),
+                                path: path.resolve(__dirname, 'resources/styles'),
                             },
                         },
                     },

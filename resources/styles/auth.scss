@@ -1,0 +1,68 @@
+@tailwind preflight;
+
+body {
+    background: config('colors.background');
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+
+    form {
+        padding: 1rem;
+        border: 1px solid config('colors.grey');
+        border-radius: .25rem;
+        background: config('colors.white');
+        text-align: center;
+
+        h1 {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1rem;
+
+            img {
+                margin-right: 0.25rem;
+            }
+
+        }
+
+        input {
+            display: block;
+            border: 1px solid config('colors.grey');
+            color: config('colors.grey-darker');
+            border-radius: .25rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem 0.75rem;
+            appearance: none;
+            width: 100%;
+
+            &:focus {
+                box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.10);
+            }
+
+        }
+
+        p.error {
+            color: config('colors.error');
+            margin-bottom: 0.5rem;
+        }
+
+        button {
+            background: config('colors.blue');
+            color: config('colors.white');
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: .25rem !important;
+            cursor: pointer;
+            width: 100%;
+
+            &:hover {
+                background: config('colors.blue-dark');
+            }
+
+        }
+
+    }
+
+}
