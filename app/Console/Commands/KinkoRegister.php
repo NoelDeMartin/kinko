@@ -5,14 +5,16 @@ namespace Kinko\Console\Commands;
 use Kinko\Models\User;
 use Illuminate\Console\Command;
 
-class RegisterUser extends Command
+class KinkoRegister extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'kinko:register';
+    protected $signature = 'kinko:register
+                    { --test : Create test user (using default password). }
+                    { --password=secret : Default password used for test users. }';
 
     /**
      * The console command description.
@@ -43,18 +45,23 @@ class RegisterUser extends Command
             }
         }
 
-        while (true) {
-            $password = $this->secret('Password');
-            $passwordConfirmation = $this->secret('Password Confirmation');
+        if ($this->option('test')) {
+            $password = $this->option('password');
+        } else {
+            while (true) {
+                $password = $this->secret('Password');
+                $passwordConfirmation = $this->secret('Password Confirmation');
 
-            if (strlen($password) < 8) {
-                $this->error('Invalid password (min. 8 characters)');
-            } elseif ($password !== $passwordConfirmation) {
-                $this->error('Passwords don\'t match!');
-            } else {
-                break;
+                if (strlen($password) < 8) {
+                    $this->error('Invalid password (min. 8 characters)');
+                } elseif ($password !== $passwordConfirmation) {
+                    $this->error('Passwords don\'t match!');
+                } else {
+                    break;
+                }
             }
         }
+
 
         $this->line('First Name: ' . $firstName);
         $this->line('Last Name: ' . $lastName);

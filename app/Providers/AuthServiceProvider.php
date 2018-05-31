@@ -3,7 +3,12 @@
 namespace Kinko\Providers;
 
 use Laravel\Passport\Passport;
-use Illuminate\Support\Facades\Gate;
+use Kinko\Models\Passport\Token;
+use Kinko\Models\Passport\Client;
+use Kinko\Auth\MongoUserProvider;
+use Kinko\Models\Passport\AuthCode;
+use Illuminate\Support\Facades\Auth;
+use Kinko\Models\Passport\PersonalAccessClient;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -26,6 +31,9 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
+        Auth::provider('mongodb', function ($app, array $config) {
+            return new MongoUserProvider($app->make('hash'), $config['model']);
+        });
         Passport::routes();
     }
 

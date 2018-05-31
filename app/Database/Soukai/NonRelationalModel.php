@@ -2,7 +2,6 @@
 
 namespace Kinko\Database\Soukai;
 
-use MongoDB\BSON\ObjectId;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Concerns\HasAttributes;
 use Illuminate\Database\Eloquent\Concerns\HasTimestamps;
@@ -23,6 +22,10 @@ class NonRelationalModel
     public $exists = false;
 
     public $incrementing = true;
+
+    protected $primaryKey = 'id';
+
+    protected $keyType = 'string';
 
     protected $resource = null;
 

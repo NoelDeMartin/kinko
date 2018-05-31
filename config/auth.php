@@ -66,7 +66,7 @@ return [
 
     'providers' => [
         'users' => [
-            'driver' => 'eloquent',
+            'driver' => 'mongodb',
             'model' => Kinko\Models\User::class,
         ],
 
