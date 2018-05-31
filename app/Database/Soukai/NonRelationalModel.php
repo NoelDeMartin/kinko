@@ -2,6 +2,7 @@
 
 namespace Kinko\Database\Soukai;
 
+use MongoDB\BSON\ObjectId;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Concerns\HasAttributes;
 use Illuminate\Database\Eloquent\Concerns\HasTimestamps;
@@ -23,10 +24,6 @@ class NonRelationalModel
 
     public $incrementing = true;
 
-    // TODO move this to mongo-specific
-    protected $primaryKey = '_id';
-    protected $keyType = 'objectid';
-
     protected $resource = null;
 
     protected $connection = null;
@@ -42,6 +39,16 @@ class NonRelationalModel
         $this->syncOriginal();
         $this->fill($attributes);
         $this->exists = $exists;
+    }
+
+    /**
+     * Get all of the models from the database.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public static function all()
+    {
+        return (new static)->newQuery()->get();
     }
 
     /**
@@ -72,6 +79,19 @@ class NonRelationalModel
         }
 
         return $this;
+    }
+
+    /**
+     * Fill the model with an array of attributes. Force mass assignment.
+     *
+     * @param  array  $attributes
+     * @return $this
+     */
+    public function forceFill(array $attributes)
+    {
+        return static::unguarded(function () use ($attributes) {
+            return $this->fill($attributes);
+        });
     }
 
     /**
@@ -195,8 +215,8 @@ class NonRelationalModel
 
     public function resource()
     {
-        $class = $this->getResourceClass();
-        return new $class($this);
+        $resourceClass = $this->getResourceClass();
+        return new $resourceClass($this);
     }
 
     /**
@@ -344,12 +364,6 @@ class NonRelationalModel
     public static function getConnectionResolver()
     {
         return static::$resolver;
-    }
-
-    // TODO move this to mongo-specific
-    public function getIdAttribute()
-    {
-        return isset($this->attributes['_id'])? $this->attributes['_id'] : null;
     }
 
     /**

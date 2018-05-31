@@ -42,6 +42,13 @@ abstract class NonRelationalConnection implements ConnectionInterface
      */
     abstract public function getQueryGrammar();
 
+    /**
+     * Get the query post processor used by the connection.
+     *
+     * @return \Kinko\Database\Query\Processors\NonRelationalProcessor
+     */
+    abstract public function getPostProcessor();
+
     /* These should be removed (forced by ConnectionInterface interface) */
 
     public function table($table)

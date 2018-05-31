@@ -50,4 +50,11 @@ class NonRelationalBuilder
 
         return is_null($document)? null : $this->model->newFromBuilder($document, true);
     }
+
+    public function get()
+    {
+        return $this->query->get()->map(function ($document) {
+            return $this->model->newFromBuilder($document, true);
+        });
+    }
 }

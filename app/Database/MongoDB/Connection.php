@@ -9,6 +9,7 @@ use Kinko\Database\MongoDB\Query\Builder as QueryBuilder;
 use Kinko\Database\MongoDB\Query\Grammar as QueryGrammar;
 use Kinko\Database\MongoDB\Schema\Builder as SchemaBuilder;
 use Kinko\Database\MongoDB\Schema\Grammar as SchemaGrammar;
+use Kinko\Database\MongoDB\Query\Processor as PostProcessor;
 
 class Connection extends NonRelationalConnection
 {
@@ -21,6 +22,8 @@ class Connection extends NonRelationalConnection
     protected $schemaGrammar = null;
 
     protected $queryGrammar = null;
+
+    protected $postProcessor = null;
 
     public function __construct(array $config)
     {
@@ -61,6 +64,14 @@ class Connection extends NonRelationalConnection
         return $this->queryGrammar;
     }
 
+    public function getPostProcessor()
+    {
+        if (is_null($this->postProcessor)) {
+            $this->postProcessor = new PostProcessor();
+        }
+
+        return $this->postProcessor;
+    }
 
     public function collection($collection)
     {

@@ -33,6 +33,9 @@
             "always-multiline"
         ]
     },
+    "globals": {
+        "Laravel": false
+    },
     "parserOptions": {
         "parser": "babel-eslint"
     }

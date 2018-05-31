@@ -44,6 +44,15 @@ class Builder extends NonRelationalBuilder
         return count($results) > 0 ? (array) $results[0] : null;
     }
 
+    public function get()
+    {
+        $results = $this->aggregate($this->buildPipeline());
+
+        return new Collection(array_map(function ($document) {
+            return (array) $document;
+        }, $results));
+    }
+
     public function pluck($field, $key = null)
     {
         $results = $this->aggregate($this->buildPipeline());

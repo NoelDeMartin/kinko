@@ -19,6 +19,6 @@ class Blueprint extends NonRelationalBlueprint
     protected function createIndex($field, $index, $parameters)
     {
         $collection = $this->connection->getDatabase()->selectCollection($this->collection);
-        $collection->createIndex([ $field => 1 ], [ $index => $parameters ]);
+        $collection->createIndex([$field => 1], $index !== 'index' ? [$index => $parameters] : []);
     }
 }

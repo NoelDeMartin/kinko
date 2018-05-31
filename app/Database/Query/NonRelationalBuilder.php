@@ -40,6 +40,13 @@ abstract class NonRelationalBuilder
     abstract public function first();
 
     /**
+     * Execute the query and get all the results.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    abstract public function get();
+
+    /**
      * Get an array with the values of a given field.
      *
      * @param  string  $field

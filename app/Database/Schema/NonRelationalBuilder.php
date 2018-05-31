@@ -22,12 +22,20 @@ abstract class NonRelationalBuilder
     abstract public function hasCollection($collection);
 
     /**
+     * Drop all collections from the database.
+     *
+     * @return void
+     */
+    abstract public function dropAllCollections();
+
+    /**
      * Create a new command set.
      *
      * @param  string  $collection
      * @return \Kinko\Database\Schema\NonRelationalBlueprint
      */
     abstract protected function createBlueprint($collection);
+
 
     /**
      * Create a new collection on the schema.
@@ -52,5 +60,10 @@ abstract class NonRelationalBuilder
     public function hasTable($table)
     {
         return $this->hasCollection($table);
+    }
+
+    public function dropAllTables()
+    {
+        return $this->dropAllCollections();
     }
 }

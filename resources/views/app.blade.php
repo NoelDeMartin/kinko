@@ -1,5 +1,9 @@
 @extends('layouts.master')
 
+@push('meta')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+@endpush
+
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 @endpush

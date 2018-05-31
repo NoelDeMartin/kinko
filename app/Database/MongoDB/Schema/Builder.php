@@ -24,6 +24,15 @@ class Builder extends NonRelationalBuilder
         return false;
     }
 
+    public function dropAllCollections()
+    {
+        $db = $this->connection->getDatabase();
+
+        foreach ($db->listCollections() as $collection) {
+            $db->dropCollection($collection->getName());
+        }
+    }
+
     protected function createBlueprint($collection)
     {
         return new Blueprint($collection);
