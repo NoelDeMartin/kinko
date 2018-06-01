@@ -1,5 +1,6 @@
-declare const Laravel: {
-    user: {
+interface LaravelData {
+    serverSide: boolean,
+    user?: {
         id: string,
         first_name: string,
         last_name: string,
@@ -7,4 +8,18 @@ declare const Laravel: {
         created_at: number,
         updated_at: number,
     }
-};
+}
+
+declare const Laravel: LaravelData;
+
+interface Window {
+    Laravel: LaravelData;
+}
+
+declare namespace NodeJS {
+
+    interface Global {
+        Laravel: LaravelData;
+    }
+
+}

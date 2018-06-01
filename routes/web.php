@@ -7,4 +7,5 @@ Route::get('logout', 'AuthController@logout');
 
 Route::middleware('auth')->group(function () {
     Route::view('/', 'app');
+    Route::view('/collection/{name}', 'app');
 });

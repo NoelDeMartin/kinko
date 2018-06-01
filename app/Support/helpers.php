@@ -26,3 +26,39 @@ if (!function_exists('resource')) {
         }
     }
 }
+
+if (!function_exists('app_laravel_data')) {
+    /**
+     * Prepare app laravel json.
+     *
+     * @return string
+     */
+    function app_laravel_data($serverSide = true)
+    {
+        $data = [ 'serverSide' => $serverSide ];
+
+        if (auth()->check()) {
+            $data['user'] = auth()->user()->resource();
+        }
+
+        return $data;
+    }
+}
+
+if (!function_exists('render_vue')) {
+    /**
+     * Render vue application.
+     *
+     * @return string
+     */
+    function render_vue($path)
+    {
+        return shell_exec(implode(' ', [
+            'node',
+            realpath(base_path('scripts/vue-ssr/render.js')),
+            $path,
+            escapeshellarg(json_encode(app_laravel_data())),
+            '2>&1'
+        ]));
+    }
+}

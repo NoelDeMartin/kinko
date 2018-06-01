@@ -3,6 +3,7 @@
 /public/storage
 /public/js
 /public/css
+/scripts/vue-ssr
 /storage/*.key
 /vendor
 /.idea

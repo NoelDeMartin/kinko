@@ -10,6 +10,7 @@
         "interface-name": false,
         "no-angle-bracket-type-assertion": false,
         "object-literal-sort-keys": false,
+        "curly": [true, "ignore-same-line"],
         "variable-name": [
             true,
             "ban-keywords",

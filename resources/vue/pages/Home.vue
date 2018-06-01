@@ -1,17 +1,14 @@
 <template>
-    <div class="w-screen h-screen flex flex-col items-center justify-center bg-grey-lighter">
-        <h1 class="flex items-center justify-center">
-            <img src="https://png.icons8.com/color/80/000000/safe.png"> 金庫
-        </h1>
+    <div class="flex flex-col items-center justify-center">
         <h2>Hello, {{ username }}</h2>
-        <ul>
-            <li
-                v-for="collection of collections"
-                :key="collection.name"
-            >
-                {{ collection.name }}
-            </li>
-        </ul>
+        <router-link
+            v-for="collection of collections"
+            :key="collection.name"
+            :to="'/collection/' + collection.name"
+            class="bg-blue hover:bg-blue-dark text-lg text-white font-bold py-2 px-4 mt-2 rounded-full no-underline"
+        >
+            {{ collection.name }}
+        </router-link>
     </div>
 </template>
 
@@ -32,9 +29,11 @@ export default {
         },
     },
     created() {
-        Collections.index().then(collections => {
-            this.collections = collections;
-        });
+        if (!Laravel.serverSide) {
+            Collections.index().then(collections => {
+                this.collections = collections;
+            });
+        }
     },
 };
 </script>

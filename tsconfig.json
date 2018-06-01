@@ -6,8 +6,8 @@
             "dom"
         ],
         "strict": true,
-        "target": "es5",
-        "module": "es2015",
+        "target": "esnext",
+        "module": "esnext",
         "moduleResolution": "node",
         "isolatedModules": false,
         "experimentalDecorators": true,

@@ -11,95 +11,110 @@ const inProduction = process.env.NODE_ENV === 'production';
 // TODO implement cache busting
 // TODO implement code splitting (js & css)
 
-module.exports = {
+function config(cleanDirs) {
+    return {
 
-    entry: {
-        app: [
-            './resources/vue/app.ts',
-            './resources/styles/app.scss',
-        ],
-        auth: [
-            './resources/styles/auth.scss',
-        ],
-    },
+        module: {
 
-    output: {
-        path: path.resolve(__dirname, 'public'),
-        filename: 'js/[name].js',
-    },
+            rules: [
 
-    module: {
+                {
+                    test: /\.js$/,
+                    use: ['babel-loader', 'eslint-loader'],
+                    exclude: file => (
+                        /node_modules/.test(file) &&
+                        !/\.vue\.js/.test(file)
+                    ),
+                },
 
-        rules: [
-
-            {
-                test: /\.js$/,
-                use: ['babel-loader', 'eslint-loader'],
-                exclude: file => (
-                    /node_modules/.test(file) &&
-                    !/\.vue\.js/.test(file)
-                ),
-            },
-
-            {
-                test: /\.ts$/,
-                use: [
-                    'babel-loader',
-                    {
-                        loader: 'ts-loader',
-                        options: {
-                            appendTsSuffixTo: [/\.vue$/],
-                        },
-                    },
-                    'tslint-loader',
-                ],
-            },
-
-            {
-                test: /\.vue$/,
-                use: 'vue-loader',
-            },
-
-            {
-                test: /\.scss$/,
-                use: [
-                    MiniCssExtractPlugin.loader,
-                    'css-loader',
-                    {
-                        loader: 'postcss-loader',
-                        options: {
-                            config: {
-                                path: path.resolve(__dirname, 'resources/styles'),
+                {
+                    test: /\.ts$/,
+                    use: [
+                        'babel-loader',
+                        {
+                            loader: 'ts-loader',
+                            options: {
+                                appendTsSuffixTo: [/\.vue$/],
                             },
                         },
-                    },
-                    'sass-loader',
-                ],
-            },
+                        'tslint-loader',
+                    ],
+                },
 
+                {
+                    test: /\.vue$/,
+                    use: 'vue-loader',
+                },
+
+                {
+                    test: /\.scss$/,
+                    use: [
+                        MiniCssExtractPlugin.loader,
+                        'css-loader',
+                        {
+                            loader: 'postcss-loader',
+                            options: {
+                                config: {
+                                    path: path.resolve(__dirname, 'resources/styles'),
+                                },
+                            },
+                        },
+                        'sass-loader',
+                    ],
+                },
+
+            ],
+        },
+
+        plugins: [
+            new ClearPlugin(
+                cleanDirs,
+                {
+                    dist: __dirname,
+                    verbose: true,
+                    dry: false,
+                }
+            ),
+            new VueLoaderPlugin(),
+            new MiniCssExtractPlugin({ filename: 'css/[name].css' }),
+            new webpack.LoaderOptionsPlugin({ minimize: inProduction }),
         ],
 
-    },
-
-    plugins: [
-        new ClearPlugin(
-            [ 'public/js', 'public/css' ],
-            {
-                dist: __dirname,
-                verbose: true,
-                dry: false,
-            }
-        ),
-        new VueLoaderPlugin(),
-        new MiniCssExtractPlugin({ filename: 'css/[name].css' }),
-        new webpack.LoaderOptionsPlugin({ minimize: inProduction }),
-    ],
-
-    resolve: {
-        extensions: ['*', '.js', '.ts'],
-        alias: {
-            '@': path.join(__dirname, 'resources/vue'),
+        resolve: {
+            extensions: ['*', '.js', '.ts'],
+            alias: {
+                '@': path.join(__dirname, 'resources/vue'),
+            },
         },
-    },
 
-};
+    };
+}
+
+module.exports = [
+    {
+        entry: {
+            app: [
+                './resources/vue/entry-client.ts',
+                './resources/styles/app.scss',
+            ],
+            auth: [
+                './resources/styles/auth.scss',
+            ],
+        },
+        output: {
+            path: path.resolve(__dirname, 'public'),
+            filename: 'js/[name].js',
+        },
+        ...config(['public/js', 'public/css']),
+    },
+    {
+        entry: {
+            render: './resources/vue/entry-server.ts',
+        },
+        output: {
+            path: path.resolve(__dirname, 'scripts/vue-ssr'),
+        },
+        target: 'node',
+        ...config(['scripts/vue-ssr']),
+    },
+];

@@ -9,14 +9,14 @@
 @endpush
 
 @section('main')
-    <div id="app"></div>
+    <div id="app">
+        {!! render_vue(request()->path()) !!}
+    </div>
 @stop
 
 @push('scripts')
     <script>
-        window.Laravel = {
-            user: @json(auth()->user()->resource()),
-        };
+        window.Laravel = @json(app_laravel_data(false));
     </script>
     <script src="{{ asset('js/app.js') }}"></script>
 @endpush
