@@ -39,7 +39,7 @@ class RouteServiceProvider extends ServiceProvider
 
         $this->mapWebRoutes();
 
-        //
+        $this->mapAutonomousDataRoutes();
     }
 
     /**
@@ -69,5 +69,16 @@ class RouteServiceProvider extends ServiceProvider
              ->middleware('api')
              ->namespace($this->namespace . '\Api')
              ->group(base_path('routes/api.php'));
+    }
+
+    /**
+     * Define the "autonomous-data" routes for the application.
+     *
+     * @return void
+     */
+    protected function mapAutonomousDataRoutes()
+    {
+        Route::prefix('data')
+             ->group(base_path('routes/autonomous-data.php'));
     }
 }

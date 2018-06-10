@@ -34,7 +34,6 @@ class AuthServiceProvider extends ServiceProvider
         Auth::provider('mongodb', function ($app, array $config) {
             return new MongoUserProvider($app->make('hash'), $config['model']);
         });
-        Passport::routes();
     }
 
     /**

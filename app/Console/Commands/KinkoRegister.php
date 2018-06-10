@@ -75,7 +75,7 @@ class KinkoRegister extends Command
                 'password'   => bcrypt($password),
             ]);
 
-            $this->info('Created user with id ' . $user->id);
+            $this->info('Created user with id ' . $user->_id);
         } else {
             $this->error('Operation cancelled');
         }

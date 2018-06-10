@@ -31,7 +31,7 @@ if (!function_exists('app_laravel_data')) {
     /**
      * Prepare app laravel json.
      *
-     * @return string
+     * @return array
      */
     function app_laravel_data($serverSide = true)
     {

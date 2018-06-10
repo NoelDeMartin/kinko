@@ -2,9 +2,9 @@
 
 namespace Kinko\Database;
 
-use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Connection;
 
-abstract class NonRelationalConnection implements ConnectionInterface
+abstract class NonRelationalConnection extends Connection
 {
     protected $config;
 
@@ -20,34 +20,6 @@ abstract class NonRelationalConnection implements ConnectionInterface
      * @return \Kinko\Database\Schema\NonRelationalBuilder
      */
     abstract public function collection($collection);
-
-    /**
-     * Get a schema builder instance for the connection.
-     *
-     * @return \Kinko\Database\Schema\NonRelationalBuilder
-     */
-    abstract public function getSchemaBuilder();
-
-    /**
-     * Get the schema grammar used by the connection.
-     *
-     * @return \Kinko\Database\Schema\Grammars\NonRelationalGrammar
-     */
-    abstract public function getSchemaGrammar();
-
-    /**
-     * Get the schema grammar used by the connection.
-     *
-     * @return \Kinko\Database\Query\Grammars\NonRelationalGrammar
-     */
-    abstract public function getQueryGrammar();
-
-    /**
-     * Get the query post processor used by the connection.
-     *
-     * @return \Kinko\Database\Query\Processors\NonRelationalProcessor
-     */
-    abstract public function getPostProcessor();
 
     /* These should be removed (forced by ConnectionInterface interface) */
 
