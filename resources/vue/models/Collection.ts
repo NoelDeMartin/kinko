@@ -4,8 +4,8 @@ export interface CollectionJson {
 
 export default class Collection {
 
-    public static fromArray(jsonArray: CollectionJson[]): Collection[] {
-        return jsonArray.map(json => new Collection(json));
+    public static fromJson(json: CollectionJson): Collection {
+        return new Collection(json);
     }
 
     public readonly name: string;

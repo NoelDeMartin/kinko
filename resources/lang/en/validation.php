@@ -112,6 +112,7 @@ return [
     'unique'               => 'The :attribute has already been taken.',
     'uploaded'             => 'The :attribute failed to upload.',
     'url'                  => 'The :attribute format is invalid.',
+    'secure_url'           => 'The :attribute format is invalid (must use https).',
 
     /*
     |--------------------------------------------------------------------------

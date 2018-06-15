@@ -8,20 +8,40 @@ use Kinko\Database\Query\NonRelationalBuilder;
 
 class Builder extends NonRelationalBuilder
 {
-    protected $wheres = [];
-
-    protected $orders = [];
-
-    protected $limit = null;
-
-    public function __construct($connection, $collection)
+    public function where($field, $operator = null, $value = null, $boolean = 'and')
     {
-        parent::__construct($connection, $collection);
+        if (func_num_args() === 2) {
+            $value = $operator;
+            $operator = '=';
+        }
+
+        if ($operator !== '=') {
+            throw new InvalidArgumentException('Illegal operator and value combination.');
+        }
+
+        if ($boolean !== 'and') {
+            throw new InvalidArgumentException('Illegal boolean operation.');
+        }
+
+        $this->wheres[$field] = $value;
+
+        return $this;
     }
 
-    public function where($field, $value)
+    public function whereIn($field, $values, $boolean = 'and', $not = false)
     {
-        $this->wheres[$field] = $value;
+        if ($boolean !== 'and') {
+            throw new InvalidArgumentException('Illegal boolean operation.');
+        }
+
+        if ($not !== false) {
+            // TODO implement
+            throw new InvalidArgumentException('Operation not implemented for MongoDB.');
+        }
+
+        $this->wheres[$field] = ['$in' => $value];
+
+        return $this;
     }
 
     public function orderBy($field, $direction = 'asc')
@@ -35,18 +55,28 @@ class Builder extends NonRelationalBuilder
         return $this;
     }
 
-    public function first()
+    public function first($fields = ['*'])
     {
+        if (count($fields) > 1 || (count($fields) === 1 && $fields[0] !== '*')) {
+            // TODO implement
+            throw new InvalidArgumentException('Operation not implemented for MongoDB.');
+        }
+
         $this->limit = 1;
 
-        $results = $this->aggregate($this->buildPipeline());
+        $results = $this->mongoAggregate($this->buildPipeline());
 
         return count($results) > 0 ? (array) $results[0] : null;
     }
 
-    public function get()
+    public function get($fields = ['*'])
     {
-        $results = $this->aggregate($this->buildPipeline());
+        if (count($fields) > 1 || (count($fields) === 1 && $fields[0] !== '*')) {
+            // TODO implement
+            throw new InvalidArgumentException('Operation not implemented for MongoDB.');
+        }
+
+        $results = $this->mongoAggregate($this->buildPipeline());
 
         return new Collection(array_map(function ($document) {
             return (array) $document;
@@ -55,14 +85,14 @@ class Builder extends NonRelationalBuilder
 
     public function pluck($field, $key = null)
     {
-        $results = $this->aggregate($this->buildPipeline());
+        $results = $this->mongoAggregate($this->buildPipeline());
 
         return (new Collection($results))->pluck($field, $key);
     }
 
     public function accumulate($field, $operation)
     {
-        $results = $this->aggregate([
+        $results = $this->mongoAggregate([
             [
                 '$group' => [
                     '_id' => null,
@@ -74,6 +104,20 @@ class Builder extends NonRelationalBuilder
         ]);
 
         return count($results) > 0? $results[0]['accumulation'] : null;
+    }
+
+    public function count($fields = [])
+    {
+        if (!empty($fields)) {
+            // TODO implement
+            throw new InvalidArgumentException('Operation not implemented for MongoDB.');
+        }
+
+        $pipeline = $this->buildPipeline();
+        $pipeline[] = ['$count' => 'count'];
+        $results = $this->mongoAggregate($pipeline);
+
+        return count($results) > 0 ? $results[0]['count'] : 0;
     }
 
     public function update(array $values)
@@ -89,7 +133,7 @@ class Builder extends NonRelationalBuilder
         return $result->getInsertedCount() === count($documents);
     }
 
-    public function insertAndGetKey(array $values, $key = null)
+    public function insertGetId(array $values, $key = null)
     {
         if (!is_null($key) && $key !== '_id') {
             throw new InvalidArgumentException("Primary key field should be '_id', '{$key}' given");
@@ -104,7 +148,7 @@ class Builder extends NonRelationalBuilder
 
     protected function getCollection()
     {
-        return $this->connection->getDatabase()->selectCollection($this->collection);
+        return $this->connection->getDatabase()->selectCollection($this->from);
     }
 
     protected function prepareDocuments($values)
@@ -137,8 +181,7 @@ class Builder extends NonRelationalBuilder
         return $pipeline;
     }
 
-    // TODO this may cause issues with laravel's aggregate
-    protected function aggregate($pipeline)
+    protected function mongoAggregate($pipeline)
     {
         return $this->getCollection()->aggregate($pipeline)->toArray();
     }

@@ -75,7 +75,7 @@ class Connection extends NonRelationalConnection
 
     public function collection($collection)
     {
-        return new QueryBuilder($this, $collection);
+        return $this->query()->from($collection);
     }
 
     public function raw($value)

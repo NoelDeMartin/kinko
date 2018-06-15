@@ -3,40 +3,10 @@
 namespace Kinko\Database\Schema;
 
 use Closure;
+use Illuminate\Database\Schema\Builder;
 
-abstract class NonRelationalBuilder
+abstract class NonRelationalBuilder extends Builder
 {
-    protected $connection;
-
-    public function __construct($connection)
-    {
-        $this->connection = $connection;
-    }
-
-    /**
-     * Determine if the given collection exists.
-     *
-     * @param  string  $collection
-     * @return bool
-     */
-    abstract public function hasCollection($collection);
-
-    /**
-     * Drop all collections from the database.
-     *
-     * @return void
-     */
-    abstract public function dropAllCollections();
-
-    /**
-     * Create a new command set.
-     *
-     * @param  string  $collection
-     * @return \Kinko\Database\Schema\NonRelationalBlueprint
-     */
-    abstract protected function createBlueprint($collection);
-
-
     /**
      * Create a new collection on the schema.
      *
@@ -54,6 +24,21 @@ abstract class NonRelationalBuilder
 
         $blueprint->apply($this->connection);
     }
+
+    /**
+     * Determine if the given collection exists.
+     *
+     * @param  string  $collection
+     * @return bool
+     */
+    abstract public function hasCollection($collection);
+
+    /**
+     * Drop all collections from the database.
+     *
+     * @return void
+     */
+    abstract public function dropAllCollections();
 
     /* These should be removed (forced by usage of /Illuminate/Database/Schema/Builder class) */
 

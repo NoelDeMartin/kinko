@@ -135,13 +135,13 @@ module.exports = {
 
     fonts: {
         'sans': [
+            'Ubuntu',
             'system-ui',
             'BlinkMacSystemFont',
             '-apple-system',
             'Segoe UI',
             'Roboto',
             'Oxygen',
-            'Ubuntu',
             'Cantarell',
             'Fira Sans',
             'Droid Sans',

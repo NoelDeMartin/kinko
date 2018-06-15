@@ -2,8 +2,12 @@
 
 namespace Kinko\Providers;
 
-use Laravel\Passport\Passport;
+use GuzzleHttp\Client;
+use Kinko\GraphQL\GraphQL;
+use Illuminate\Support\Str;
+use GuzzleHttp\ClientInterface;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Resources\Json\Resource;
 
 class AppServiceProvider extends ServiceProvider
@@ -16,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         Resource::withoutWrapping();
+
+        Validator::extend('secure_url', function ($attribute, $value, $parameters, $validator) {
+            return $validator->validateUrl($attribute, $value) && Str::startsWith($value, 'https://');
+        });
     }
 
     /**
@@ -25,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->bind('graphql', GraphQL::class);
+        $this->app->bind(ClientInterface::class, Client::class);
     }
 }

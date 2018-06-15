@@ -3,6 +3,7 @@
 namespace Kinko\Exceptions;
 
 use Exception;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 
 class Handler extends ExceptionHandler
@@ -13,7 +14,7 @@ class Handler extends ExceptionHandler
      * @var array
      */
     protected $dontReport = [
-        //
+        ApiError::class,
     ];
 
     /**
@@ -47,5 +48,12 @@ class Handler extends ExceptionHandler
     public function render($request, Exception $exception)
     {
         return parent::render($request, $exception);
+    }
+
+    protected function invalid($request, ValidationException $exception)
+    {
+        return $request->isMethod('get')
+            ? $this->invalidJson($request, $exception)
+            : parent::invalid($request, $exception);
     }
 }

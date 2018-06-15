@@ -1,10 +1,26 @@
 const webpack = require('webpack');
 const path = require('path');
+
+const inProduction = process.env.NODE_ENV === 'production';
+
+/* Loaders */
+const CustomLoader = require('custom-loader');
+
+CustomLoader.loaders = {
+    'vue-tslint-fixer': function (source) {
+        if (this.resourcePath.endsWith('.vue')) {
+            return source.trim() + '\n';
+        }
+        return source;
+    },
+};
+
+/* Plugins */
 const ClearPlugin = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
 
-const inProduction = process.env.NODE_ENV === 'production';
+/* Config */
 
 // TODO extract vendors
 // TODO review hot loading
@@ -38,6 +54,7 @@ function config(cleanDirs) {
                             },
                         },
                         'tslint-loader',
+                        'custom-loader?name=vue-tslint-fixer',
                     ],
                 },
 
@@ -55,7 +72,7 @@ function config(cleanDirs) {
                             loader: 'postcss-loader',
                             options: {
                                 config: {
-                                    path: path.resolve(__dirname, 'resources/styles'),
+                                    path: path.resolve(__dirname, 'resources/assets/styles'),
                                 },
                             },
                         },
@@ -84,6 +101,8 @@ function config(cleanDirs) {
             extensions: ['*', '.js', '.ts'],
             alias: {
                 '@': path.join(__dirname, 'resources/vue'),
+                '@js': path.join(__dirname, 'resources/assets/js'),
+                'vue$': 'vue/dist/vue.esm.js',
             },
         },
 
@@ -94,11 +113,17 @@ module.exports = [
     {
         entry: {
             app: [
+                'babel-polyfill',
                 './resources/vue/entry-client.ts',
-                './resources/styles/app.scss',
+                './resources/vue/app.scss',
             ],
             auth: [
-                './resources/styles/auth.scss',
+                './resources/assets/styles/auth.scss',
+            ],
+            store: [
+                'babel-polyfill',
+                './resources/assets/js/store.ts',
+                './resources/assets/styles/store.scss',
             ],
         },
         output: {
@@ -109,7 +134,10 @@ module.exports = [
     },
     {
         entry: {
-            render: './resources/vue/entry-server.ts',
+            render: [
+                'babel-polyfill',
+                './resources/vue/entry-server.ts',
+            ],
         },
         output: {
             path: path.resolve(__dirname, 'scripts/vue-ssr'),

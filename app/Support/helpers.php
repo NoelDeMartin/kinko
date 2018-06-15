@@ -35,7 +35,10 @@ if (!function_exists('app_laravel_data')) {
      */
     function app_laravel_data($serverSide = true)
     {
-        $data = [ 'serverSide' => $serverSide ];
+        $data = [
+            'baseUrl'    => url(''),
+            'serverSide' => $serverSide,
+        ];
 
         if (auth()->check()) {
             $data['user'] = auth()->user()->resource();

@@ -13,8 +13,8 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::delete('authorize', 'DenyAuthorizationController@deny');
     });
 
-    Route::namespace('\Kinko\Http\Controllers\Web\AutonomousData')->group(function () {
-        Route::get('register', 'ClientRegistrationController@create');
-        Route::post('register', 'ClientRegistrationController@store');
+    Route::namespace('\Kinko\Http\Controllers\Store\Api')->group(function () {
+        Route::get('register', 'ApplicationsController@create');
+        Route::post('register', 'ApplicationsController@store');
     });
 });

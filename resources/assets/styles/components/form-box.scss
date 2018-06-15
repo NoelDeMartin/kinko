@@ -1,0 +1,23 @@
+.form-box {
+    @apply .bg-white .p-4 .rounded .shadow .border-grey .border;
+    max-width: 50vw;
+
+    input[type="text"] {
+        @apply .w-full .bg-white .rounded .border-grey .border .mb-1 .px-3 .py-2;
+
+        &:focus {
+            @apply .shadow;
+        }
+
+    }
+
+    button[type="submit"] {
+        @apply .w-full .bg-blue .p-2 text-white .rounded;
+
+        &:hover {
+            @apply .bg-blue-dark;
+        }
+
+    }
+
+}

@@ -1,11 +1,13 @@
-import Collection, { CollectionJson } from '@/models/Collection';
-
 import Endpoint from './Endpoint';
 
+import Collection from '@/models/Collection';
+
 class Collections extends Endpoint {
+
     public index(): Promise<Collection[]> {
-        return this.get('collections').then(collections => Collection.fromArray(collections));
+        return this.get('collections').then(collections => collections.map(Collection.fromJson));
     }
+
 }
 
 export default new Collections();

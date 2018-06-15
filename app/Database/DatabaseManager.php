@@ -5,6 +5,7 @@ namespace Kinko\Database;
 use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
 use InvalidArgumentException;
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\ConnectionResolverInterface;
 
 class DatabaseManager implements ConnectionResolverInterface
@@ -27,7 +28,10 @@ class DatabaseManager implements ConnectionResolverInterface
         $name = $name ? : $database;
 
         if (!isset($this->connections[$name])) {
-            $this->connections[$name] = $this->makeConnection($database);
+            $this->connections[$name] = $this->configure(
+                $this->makeConnection($database),
+                $type
+            );
         }
 
         return $this->connections[$name];
@@ -92,6 +96,25 @@ class DatabaseManager implements ConnectionResolverInterface
         }
 
         return $config;
+    }
+
+    protected function configure(ConnectionInterface $connection, $type)
+    {
+        // First we'll set the fetch mode and a few other dependencies of the database
+        // connection. This method basically just configures and prepares it to get
+        // used by the application. Once we're finished we'll return it back out.
+        if ($this->app->bound('events')) {
+            $connection->setEventDispatcher($this->app['events']);
+        }
+
+        // Here we'll set a reconnector callback. This reconnector can be any callable
+        // so we will set a Closure to reconnect from this manager with the name of
+        // the connection, which will allow us to reconnect from the connections.
+        $connection->setReconnector(function ($connection) {
+            $this->reconnect($connection->getName());
+        });
+
+        return $connection;
     }
 
     /**

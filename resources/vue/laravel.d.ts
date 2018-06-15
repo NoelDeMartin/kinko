@@ -1,5 +1,6 @@
 interface LaravelData {
-    serverSide: boolean,
+    baseUrl: string,
+    serverSide?: boolean,
     user?: {
         id: string,
         first_name: string,

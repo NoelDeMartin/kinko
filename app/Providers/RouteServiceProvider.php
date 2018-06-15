@@ -39,7 +39,7 @@ class RouteServiceProvider extends ServiceProvider
 
         $this->mapWebRoutes();
 
-        $this->mapAutonomousDataRoutes();
+        $this->mapStoreRoutes();
     }
 
     /**
@@ -72,13 +72,13 @@ class RouteServiceProvider extends ServiceProvider
     }
 
     /**
-     * Define the "autonomous-data" routes for the application.
+     * Define the "data" routes for the application.
      *
      * @return void
      */
-    protected function mapAutonomousDataRoutes()
+    protected function mapStoreRoutes()
     {
-        Route::prefix('data')
-             ->group(base_path('routes/autonomous-data.php'));
+        Route::prefix('store')
+             ->group(base_path('routes/store.php'));
     }
 }

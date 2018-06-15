@@ -8,8 +8,9 @@
         <title>Kinko</title>
         @stack('styles')
     </head>
-    <body>
+    <body class="font-sans">
         @yield('main')
+        <link crossorigin="anonymous" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
         @stack('scripts')
     </body>
 </html>

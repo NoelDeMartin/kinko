@@ -24,6 +24,12 @@
             "error",
             4
         ],
+        "vue/max-attributes-per-line": [
+            "error",
+            {
+                "singleline": 3
+            }
+        ],
         "space-before-function-paren": "off",
         "semi": [
             "error",

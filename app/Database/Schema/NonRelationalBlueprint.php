@@ -3,17 +3,17 @@
 namespace Kinko\Database\Schema;
 
 use Illuminate\Support\Fluent;
+use Illuminate\Database\Schema\Blueprint;
 
-abstract class NonRelationalBlueprint
+abstract class NonRelationalBlueprint extends Blueprint
 {
     protected $collection;
-
-    protected $connection = null;
 
     protected $fields = [];
 
     public function __construct($collection)
     {
+        parent::__construct($collection);
         $this->collection = $collection;
     }
 
@@ -52,23 +52,4 @@ abstract class NonRelationalBlueprint
     abstract protected function createCollection();
 
     abstract protected function createIndex($field, $index, $parameters);
-
-    /* These should be removed (forced by usage of
-     * Illuminate/Database/Migrations/DatabaseMigrationRepository class)
-     **/
-
-    public function increments($column)
-    {
-        //
-    }
-
-    public function string($column)
-    {
-        //
-    }
-
-    public function integer($column)
-    {
-        //
-    }
 }

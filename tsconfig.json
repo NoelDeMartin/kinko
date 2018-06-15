@@ -20,12 +20,17 @@
         "paths": {
             "@/*": [
                 "resources/vue/*"
+            ],
+            "@js/*": [
+                "resources/assets/js/*"
             ]
         }
     },
     "include": [
         "resources/vue/**/*.ts",
-        "resources/vue/**/*.vue"
+        "resources/vue/**/*.vue",
+        "resources/assets/js/**/*.ts",
+        "resources/assets/js/**/*.vue"
     ],
     "exclude": [
         "node_modules"

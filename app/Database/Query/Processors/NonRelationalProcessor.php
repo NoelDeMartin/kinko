@@ -2,6 +2,8 @@
 
 namespace Kinko\Database\Query\Processors;
 
-abstract class NonRelationalProcessor
+use Illuminate\Database\Query\Processors\Processor;
+
+abstract class NonRelationalProcessor extends Processor
 {
 }

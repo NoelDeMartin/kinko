@@ -2,6 +2,7 @@
 
 namespace Kinko\Database\MongoDB\Schema;
 
+use Closure;
 use Kinko\Database\Schema\NonRelationalBuilder;
 
 class Builder extends NonRelationalBuilder
@@ -33,8 +34,13 @@ class Builder extends NonRelationalBuilder
         }
     }
 
-    protected function createBlueprint($collection)
+    protected function createBlueprint($collection, Closure $closure = null)
     {
+        if ($closure !== null) {
+            // TODO implement
+            throw new InvalidArgumentException('Operation not implemented for MongoDB.');
+        }
+
         return new Blueprint($collection);
     }
 }
