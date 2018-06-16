@@ -3,10 +3,10 @@
 namespace Kinko\Http\Requests\Rules;
 
 use Exception;
-use Illuminate\Contracts\Validation\Rule;
 use Kinko\Support\Facades\GraphQL;
+use Illuminate\Contracts\Validation\Rule;
 
-class GraphQLSchema implements Rule
+class ApplicationSchemaJson implements Rule
 {
     /**
      * Determine if the validation rule passes.
@@ -18,13 +18,9 @@ class GraphQLSchema implements Rule
     public function passes($attribute, $value)
     {
         try {
-            $schema = GraphQL::parseSchema($value);
+            GraphQL::parseJson($value, true);
 
-            $types = array_keys($schema->getTypeMap());
-
-            return !in_array('Query', $types)
-                && !in_array('Mutation', $types)
-                && !in_array('Subscription', $types);
+            return true;
         } catch (Exception $e) {
             return false;
         }
@@ -37,6 +33,6 @@ class GraphQLSchema implements Rule
      */
     public function message()
     {
-        return 'Invalid GraphQL Schema.';
+        return 'Invalid application schema.';
     }
 }

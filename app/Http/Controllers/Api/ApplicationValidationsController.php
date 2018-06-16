@@ -21,7 +21,8 @@ class ApplicationValidationsController extends Controller
     {
         $details = $this->retrieveApplicationDetails($request->input('url'));
 
-        $details['schema'] = $this->retrieveApplicationSchema($details);
+        $schema = $this->retrieveApplicationSchema($details);
+        $details['schema'] = $schema->toArray();
 
         return $details;
     }
@@ -86,9 +87,7 @@ class ApplicationValidationsController extends Controller
                 throw new ApiError('Could not get application schema from ' . $url);
             }
 
-            $schema = GraphQL::parseSchema($response->getBody()->getContents(), true);
-
-            return GraphQL::serializeSchema($schema);
+            return GraphQL::parseGraphQLSchema($response->getBody()->getContents(), true);
         } catch (Exception $e) {
             throw new ApiError('Could not get application schema from ' . $url);
         }

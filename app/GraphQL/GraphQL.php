@@ -12,13 +12,16 @@ use GraphQL\Type\Definition\ObjectType;
 
 class GraphQL
 {
-    public function parseSchema($source, $validate = false)
+    /**
+     * Parses GraphQL Schema into ApplicationSchema.
+     */
+    public function parseGraphQLSchema($source, $validate = false)
     {
         $schema = BuildSchema::build($source);
 
         if ($validate) {
             if (!is_null($schema->getQueryType())) {
-                throw new Error("Schema definitions don't accept Query type definitions");
+                throw new Error('Application schema must not contain internal types');
             }
             $schema->getConfig()->setQuery(new ObjectType(['name' => 'Query']));
 
@@ -27,47 +30,69 @@ class GraphQL
             $schema->assertValid();
         }
 
-        return $schema;
+        return $this->convertToApplicationSchema($schema);
     }
 
-    public function serializeSchema(Schema $schema)
+    /**
+     * Parses Json into ApplicationSchema.
+     */
+    public function parseJson($source, $validate = false)
     {
+        $schema = json_decode($source, true);
+        $applicationSchema = new ApplicationSchema;
+        $internalTypes = Type::getInternalTypes() + Introspection::getTypes();
+
+        foreach ($schema as $name => $type) {
+            $applicationType = new ApplicationType;
+
+            if ($validate && isset($internalTypes[$name])) {
+                throw new Error('Application schema must not contain internal types');
+            }
+
+            foreach ($type as $name => $field) {
+                $applicationType->addField($name, $field['type'], $field['required']);
+            }
+
+            $applicationSchema->addType($name, $applicationType);
+        }
+
+        return $applicationSchema;
+    }
+
+    private function convertToApplicationSchema(Schema $schema)
+    {
+        $applicationSchema = new ApplicationSchema;
         $types = $schema->getTypeMap();
         $internalTypes = Type::getInternalTypes() + Introspection::getTypes();
-        $serializedSchema = [];
 
         foreach ($types as $name => $type) {
             if (isset($internalTypes[$name])) {
                 continue;
             }
 
-            $serializedSchema[$name] = $this->serializeType($type);
+            $applicationSchema->addType($name, $this->convertToApplicationType($type));
         }
 
-        return $serializedSchema;
+        return $applicationSchema;
     }
 
-    private function serializeType(ObjectType $type)
+    private function convertToApplicationType(ObjectType $type)
     {
+        $applicationType = new ApplicationType;
         $fields = $type->getFields();
-        $definition = [];
 
         foreach ($fields as $field) {
-            $fieldDefinition = [];
             $fieldType = $field->getType();
+            $required = false;
 
             if ($fieldType instanceof NonNull) {
-                $fieldDefinition['required'] = true;
+                $required = true;
                 $fieldType = $fieldType->getWrappedType();
-            } else {
-                $fieldDefinition['required'] = false;
             }
 
-            $fieldDefinition['type'] = $fieldType->name;
-
-            $definition[$field->name] = $fieldDefinition;
+            $applicationType->addField($field->name, $fieldType->name, $required);
         }
 
-        return $definition;
+        return $applicationType;
     }
 }

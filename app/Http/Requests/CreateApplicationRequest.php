@@ -18,10 +18,7 @@ class CreateApplicationRequest extends FormRequest
     {
         return [
             'name' => 'string',
-            'url'  => [
-                'required',
-                app()->environment('production') ? 'secure_url' : 'url',
-            ],
+            'url'  => 'required|secure_url',
         ];
     }
 }

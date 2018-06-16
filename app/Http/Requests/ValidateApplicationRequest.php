@@ -17,10 +17,7 @@ class ValidateApplicationRequest extends FormRequest
     public function rules()
     {
         return [
-            'url' => [
-                'required',
-                app()->environment('production') ? 'secure_url' : 'url',
-            ],
+            'url' => 'required|secure_url',
         ];
     }
 }

@@ -21,9 +21,15 @@ class AppServiceProvider extends ServiceProvider
     {
         Resource::withoutWrapping();
 
-        Validator::extend('secure_url', function ($attribute, $value, $parameters, $validator) {
-            return $validator->validateUrl($attribute, $value) && Str::startsWith($value, 'https://');
-        });
+        $app = $this->app;
+        Validator::extend(
+            'secure_url',
+            function ($attribute, $value, $parameters, $validator) use (&$app) {
+                return $validator->validateUrl($attribute, $value) && (
+                    !$app->environment('production') || Str::startsWith($value, 'https://')
+                );
+            }
+        );
     }
 
     /**
