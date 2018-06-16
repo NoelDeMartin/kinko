@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
+use Kinko\Models\User;
+use Kinko\Models\Application;
+use Kinko\Models\Passport\Client;
 use Tests\Concerns\FakesGuzzleRequests;
 
 class ApplicationTests extends TestCase
@@ -16,8 +19,6 @@ class ApplicationTests extends TestCase
         $callbackUrl = '/' . $this->faker->word;
         $description = $this->faker->sentence();
         $schemaUrl = '/autonomous-data-schema.graphql';
-
-        $this->withoutExceptionHandling();
 
         $this->fakeGuzzleRequests();
         $this->appendGuzzleResponse(200, [], [
@@ -43,6 +44,48 @@ class ApplicationTests extends TestCase
         $this->assertEquals($description, $details['description']);
         $this->assertEquals('https://' . $domain . $schemaUrl, $details['schema_url']);
         $this->assertEquals(load_stub('schema.json'), $details['schema']);
+    }
+
+    public function test_register()
+    {
+        $user = factory(User::class)->create();
+        $name = $this->faker->sentence;
+        $domain = $this->faker->domainName;
+        $callbackUrl = 'http://' . $domain . '/' . $this->faker->word;
+        $description = $this->faker->sentence();
+        $schema = load_stub('schema.json');
+
+        $response = $this->login($user)->post('/store/register', [
+            'name' => $name,
+            'domain' => $domain,
+            'callback_url' => $callbackUrl,
+            'description' => $description,
+            'schema' => json_encode($schema),
+        ]);
+
+        $response->assertSuccessful();
+
+        // TODO assert response redirection & domain called with client id and secret
+
+        $this->assertEquals(1, Application::count());
+        $this->assertEquals(1, Client::count());
+
+        $application = Application::first();
+        $client = Client::first();
+
+        $this->assertEquals($name, $application->name);
+        $this->assertEquals($domain, $application->domain);
+        $this->assertEquals($callbackUrl, $application->callback_url);
+        $this->assertEquals($description, $application->description);
+        $this->assertEquals($schema, $application->schema);
+        $this->assertEquals($client->id, $application->client_id);
+
+        $this->assertEquals($name, $client->name);
+        $this->assertEquals($callbackUrl, $client->redirect);
+        $this->assertEquals($user->id, $client->user_id);
+        $this->assertFalse($client->personal_access_client);
+        $this->assertFalse($client->password_client);
+        $this->assertFalse($client->revoked);
     }
 
     // TODO test failing scenarios

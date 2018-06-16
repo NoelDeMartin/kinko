@@ -42,18 +42,18 @@ class GraphQL
         $applicationSchema = new ApplicationSchema;
         $internalTypes = Type::getInternalTypes() + Introspection::getTypes();
 
-        foreach ($schema as $name => $type) {
+        foreach ($schema as $typeName => $type) {
             $applicationType = new ApplicationType;
 
-            if ($validate && isset($internalTypes[$name])) {
+            if ($validate && isset($internalTypes[$typeName])) {
                 throw new Error('Application schema must not contain internal types');
             }
 
-            foreach ($type as $name => $field) {
-                $applicationType->addField($name, $field['type'], $field['required']);
+            foreach ($type as $fieldName => $field) {
+                $applicationType->addField($fieldName, $field['type'], $field['required']);
             }
 
-            $applicationSchema->addType($name, $applicationType);
+            $applicationSchema->addType($typeName, $applicationType);
         }
 
         return $applicationSchema;
