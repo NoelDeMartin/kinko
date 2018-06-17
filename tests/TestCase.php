@@ -8,19 +8,19 @@ use Tests\Concerns\CreatesApplication;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Testing\TestResponse;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
 {
     use WithFaker;
-    use RefreshDatabase;
     use CreatesApplication;
 
     protected function setUp()
     {
         parent::setUp();
 
+        // TODO this makes testing slower than it should be
+        $this->artisan('migrate:fresh');
         $this->setUpFaker();
     }
 

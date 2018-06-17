@@ -6,7 +6,7 @@
     <form class="form-box" method="POST" action="{{ route('store.register') }}">
         @csrf
 
-        <input type="text" name="name" value="{{ old('name', $name) }}">
+        <input type="text" name="name" value="{{ old('name', isset($name) ? $name : '') }}">
 
         @if ($errors->any())
             <div class="text-error mt-2">

@@ -52,10 +52,7 @@ class Handler extends ExceptionHandler
 
     protected function invalid($request, ValidationException $exception)
     {
-        if ((
-            $request->isMethod('get') &&
-            strtok($exception->redirectTo ?? url()->previous(), '?') === url()->current()
-        )) {
+        if ($request->isMethod('get')) {
             $this->registerErrorViewPaths();
 
             return response()->view('errors::validation', [

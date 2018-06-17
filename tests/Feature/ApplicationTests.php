@@ -12,6 +12,26 @@ class ApplicationTests extends TestCase
 {
     use FakesGuzzleRequests;
 
+    public function test_index()
+    {
+        $applications = collect();
+        $clients = factory(Client::class, $this->faker->numberBetween(10, 20))
+            ->create()
+            ->each(function ($client) use (&$applications) {
+                $applications->push(factory(Application::class)->create(['client_id' => $client->id]));
+            });
+
+        $response = $this->login()->get('/api/applications');
+
+        $response->assertSuccessful();
+
+        $applicationsJson = $response->json();
+        $this->assertCount($applications->count(), $applicationsJson);
+        foreach ($applications as $key => $application) {
+            $this->assertEquals($application->resource()->resolve(), $applicationsJson[$key]);
+        }
+    }
+
     public function test_parse_schema()
     {
         $url = $this->faker->url;

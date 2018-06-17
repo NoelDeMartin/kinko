@@ -2,21 +2,21 @@
     <div v-if="application" class="my-2">
         <p class="mb-2">
             <strong>{{ trans('store.registration.domain') }}:</strong>
-            {{ application.domain }}
+            {{ domain }}
         </p>
         <p class="mb-2">
             <strong>{{ trans('store.registration.callback_url') }}:</strong>
-            {{ application.callbackUrl }}
+            {{ callbackUrl }}
         </p>
         <p class="mb-2">
             <strong>{{ trans('store.registration.redirect_url') }}:</strong>
-            {{ application.redirectUrl }}
+            {{ redirectUrl }}
         </p>
         <p><strong>{{ trans('store.registration.description') }}:</strong></p>
-        <p class="mb-2">{{ application.description }}</p>
+        <p class="mb-2">{{ description }}</p>
         <p><strong>{{ trans('store.registration.schema') }}:</strong></p>
-        <GraphQLSchema :schema="application.schema" />
-        <slot v-bind="application" />
+        <GraphQLSchema :schema="schema" />
+        <slot :schema="schema" />
     </div>
     <p v-else-if="error" class="my-2 text-error">
         {{ error }}
@@ -31,12 +31,12 @@ import Vue from 'vue';
 
 import ApplicationsApi from '@/api/Applications';
 
-import Application from '@/models/Application';
+import { Schema } from '@/models/Application';
 
 import GraphQLSchema from './GraphQLSchema.vue';
 
 interface Data {
-    application: Application | null;
+    schema: Schema | null;
     error: string | null;
 }
 
@@ -68,20 +68,14 @@ export default Vue.extend({
     },
     data(): Data {
         return {
-            application: null,
+            schema: null,
             error: null,
         };
     },
     created() {
         ApplicationsApi.parseSchema(this.schemaUrl)
             .then(schema => {
-                this.application = Application.fromJson({
-                    description: this.description,
-                    domain: this.domain,
-                    callback_url: this.callbackUrl,
-                    redirect_url: this.redirectUrl,
-                    schema,
-                });
+                this.schema = schema;
             })
             .catch(error => {
                 this.error = error.message;
