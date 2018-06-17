@@ -158,6 +158,18 @@ class Connection extends NonRelationalConnection
         //
     }
 
+    /**
+     * Get a new query builder instance.
+     *
+     * @return \Kinko\Database\MongoDB\Query\Builder
+     */
+    public function query()
+    {
+        return new QueryBuilder(
+            $this, $this->getQueryGrammar(), $this->getPostProcessor()
+        );
+    }
+
     protected function createClient($config)
     {
         $driverOptions = [];

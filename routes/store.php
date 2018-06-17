@@ -15,6 +15,6 @@ Route::middleware(['web', 'auth'])->group(function () {
 
     Route::namespace('\Kinko\Http\Controllers\Store\Api')->group(function () {
         Route::get('register', 'ApplicationsController@create');
-        Route::post('register', 'ApplicationsController@store');
+        Route::post('register', 'ApplicationsController@store')->name('store.register');
     });
 });

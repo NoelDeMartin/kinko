@@ -52,8 +52,17 @@ class Handler extends ExceptionHandler
 
     protected function invalid($request, ValidationException $exception)
     {
-        return $request->isMethod('get')
-            ? $this->invalidJson($request, $exception)
-            : parent::invalid($request, $exception);
+        if ((
+            $request->isMethod('get') &&
+            strtok($exception->redirectTo ?? url()->previous(), '?') === url()->current()
+        )) {
+            $this->registerErrorViewPaths();
+
+            return response()->view('errors::validation', [
+                'message' => array_first($exception->errors())[0]
+            ]);
+        }
+
+        return parent::invalid($request, $exception);
     }
 }

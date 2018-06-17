@@ -20,10 +20,12 @@ class StoreApplicationRequest extends FormRequest
     public function rules()
     {
         return [
+            'state'        => 'required|string',
             'name'         => 'required|string|unique:applications',
             'description'  => 'required|string',
             'domain'       => ['required', new Domain, 'unique:applications'],
             'callback_url' => ['required', 'secure_url', new UrlDomain($this, 'domain')],
+            'redirect_url' => ['required', 'secure_url', new UrlDomain($this, 'domain')],
             'schema'       => ['required', new ApplicationSchemaJson],
         ];
     }

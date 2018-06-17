@@ -1,7 +1,17 @@
 <template>
     <div v-if="application" class="my-2">
-        <p class="mb-2"><strong>{{ trans('store.registration.domain') }}:</strong> {{ application.domain }}</p>
-        <p class="mb-2"><strong>{{ trans('store.registration.callback_url') }}:</strong> {{ application.callbackUrl }}</p>
+        <p class="mb-2">
+            <strong>{{ trans('store.registration.domain') }}:</strong>
+            {{ application.domain }}
+        </p>
+        <p class="mb-2">
+            <strong>{{ trans('store.registration.callback_url') }}:</strong>
+            {{ application.callbackUrl }}
+        </p>
+        <p class="mb-2">
+            <strong>{{ trans('store.registration.redirect_url') }}:</strong>
+            {{ application.redirectUrl }}
+        </p>
         <p><strong>{{ trans('store.registration.description') }}:</strong></p>
         <p class="mb-2">{{ application.description }}</p>
         <p><strong>{{ trans('store.registration.schema') }}:</strong></p>
@@ -12,7 +22,7 @@
         {{ error }}
     </p>
     <p v-else class="my-2">
-        {{ trans('store.loading') }} <code>{{ url }}</code>...
+        {{ trans('store.loading') }} <code>{{ schemaUrl }}</code>...
     </p>
 </template>
 
@@ -35,7 +45,23 @@ export default Vue.extend({
         GraphQLSchema,
     },
     props: {
-        url: {
+        description: {
+            type: String,
+            required: true,
+        },
+        domain: {
+            type: String,
+            required: true,
+        },
+        callbackUrl: {
+            type: String,
+            required: true,
+        },
+        redirectUrl: {
+            type: String,
+            required: true,
+        },
+        schemaUrl: {
             type: String,
             required: true,
         },
@@ -47,9 +73,15 @@ export default Vue.extend({
         };
     },
     created() {
-        ApplicationsApi.validate(this.url)
-            .then(application => {
-                this.application = application;
+        ApplicationsApi.parseSchema(this.schemaUrl)
+            .then(schema => {
+                this.application = Application.fromJson({
+                    description: this.description,
+                    domain: this.domain,
+                    callback_url: this.callbackUrl,
+                    redirect_url: this.redirectUrl,
+                    schema,
+                });
             })
             .catch(error => {
                 this.error = error.message;

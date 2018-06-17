@@ -1,8 +1,8 @@
 export interface ApplicationJson {
     domain: string;
     callback_url: string;
+    redirect_url: string;
     description: string;
-    schema_url: string;
     schema: Schema;
 }
 
@@ -23,15 +23,15 @@ export default class Application {
 
     public readonly domain: string;
     public readonly callbackUrl: string;
+    public readonly redirectUrl: string;
     public readonly description: string;
-    public readonly schemaUrl: string;
     public readonly schema: Schema;
 
     constructor(json: ApplicationJson) {
         this.domain = json.domain;
         this.callbackUrl = json.callback_url;
+        this.redirectUrl = json.redirect_url;
         this.description = json.description;
-        this.schemaUrl = json.schema_url;
         this.schema = json.schema;
     }
 

@@ -5,7 +5,7 @@ namespace Kinko\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Kinko\Http\Requests\Concerns\AuthorizesRequests;
 
-class ValidateApplicationRequest extends FormRequest
+class ParseApplicationSchemaRequest extends FormRequest
 {
     use AuthorizesRequests;
 
@@ -17,7 +17,7 @@ class ValidateApplicationRequest extends FormRequest
     public function rules()
     {
         return [
-            'url' => 'required|secure_url',
+            'url' => 'required|url',
         ];
     }
 }

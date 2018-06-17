@@ -1,11 +1,11 @@
 import Endpoint from '@/api/Endpoint';
 
-import Application from '@/models/Application';
+import { Schema } from '@/models/Application';
 
 class Applications extends Endpoint {
 
-    public validate(url: string): Promise<Application> {
-        return this.get('applications/validate', { url }).then(Application.fromJson);
+    public parseSchema(url: string): Promise<Schema> {
+        return this.get('applications/parse_schema', { url });
     }
 
 }

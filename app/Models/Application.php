@@ -7,11 +7,11 @@ use Kinko\Database\MongoDB\Soukai\Model;
 class Application extends Model
 {
     protected $fillable = [
-        'name', 'description', 'domain', 'callback_url', 'schema',
-        'client_id',
+        'name', 'description', 'domain', 'callback_url', 'redirect_url',
+        'schema', 'client_id',
     ];
 
     protected $casts = [
-        'schema' => 'array',
+        'schema' => 'document',
     ];
 }

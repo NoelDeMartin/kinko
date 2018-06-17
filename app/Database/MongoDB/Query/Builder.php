@@ -15,6 +15,10 @@ class Builder extends NonRelationalBuilder
             $operator = '=';
         }
 
+        if ($field instanceof Closure) {
+            return $this->whereNested($field, $boolean);
+        }
+
         if ($operator !== '=') {
             throw new InvalidArgumentException('Illegal operator and value combination.');
         }
@@ -23,7 +27,9 @@ class Builder extends NonRelationalBuilder
             throw new InvalidArgumentException('Illegal boolean operation.');
         }
 
-        $this->wheres[$field] = $value;
+        $type = 'Basic';
+
+        $this->wheres[] = compact('type', 'field', 'operator', 'value', 'boolean');
 
         return $this;
     }
@@ -39,7 +45,9 @@ class Builder extends NonRelationalBuilder
             throw new InvalidArgumentException('Operation not implemented for MongoDB.');
         }
 
-        $this->wheres[$field] = ['$in' => $value];
+        $type = $not ? 'NotIn' : 'In';
+
+        $this->wheres[] = compact('type', 'field', 'values', 'boolean');
 
         return $this;
     }
@@ -146,6 +154,17 @@ class Builder extends NonRelationalBuilder
         }
     }
 
+    public function delete($id = null)
+    {
+        if (!is_null($id)) {
+            $this->where('_id', $id);
+        }
+
+        $result = $this->getCollection()->deleteMany($this->buildWheresMatch());
+
+        return $result->getDeletedCount();
+    }
+
     protected function getCollection()
     {
         return $this->connection->getDatabase()->selectCollection($this->from);
@@ -167,7 +186,7 @@ class Builder extends NonRelationalBuilder
         $pipeline = [];
 
         if (!empty($this->wheres)) {
-            $pipeline[] = [ '$match' => $this->wheres ];
+            $pipeline[] = [ '$match' => $this->buildWheresMatch() ];
         }
 
         if (!empty($this->orders)) {
@@ -179,6 +198,28 @@ class Builder extends NonRelationalBuilder
         }
 
         return $pipeline;
+    }
+
+    protected function buildWheresMatch()
+    {
+        $match = [];
+        foreach ($this->wheres as $where) {
+            switch ($where['type']) {
+                case 'Basic':
+                    $match[$where['field']] = $where['value'];
+                    break;
+                case 'In':
+                    $match[$where['field']] = [
+                        '$in' => $where['values'],
+                    ];
+                    break;
+                case 'NotIn':
+                    // TODO
+                    break;
+            }
+        }
+
+        return $match;
     }
 
     protected function mongoAggregate($pipeline)
