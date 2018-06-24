@@ -2,12 +2,16 @@
 
 namespace Kinko\Database\MongoDB\Soukai;
 
+use Kinko\Support\Facades\MongoDB;
 use Kinko\Database\Soukai\NonRelationalModel;
+use Kinko\Database\MongoDB\Soukai\Concerns\HasKeys;
 use Kinko\Database\MongoDB\Query\Builder as QueryBuilder;
 use Kinko\Database\MongoDB\Soukai\Builder as SoukaiBuilder;
 
 class Model extends NonRelationalModel
 {
+    use HasKeys;
+
     protected $primaryKey = '_id';
 
     /**
@@ -35,6 +39,25 @@ class Model extends NonRelationalModel
             $connection->getQueryGrammar(),
             $connection->getPostProcessor()
         );
+    }
+
+    public function fromDateTime($value)
+    {
+        return MongoDB::date($value);
+    }
+
+    protected function asDateTime($value)
+    {
+        return parent::asDateTime(MongoDB::convertDate($value));
+    }
+
+    public function setAttribute($key, $value)
+    {
+        if (!is_null($value) && $this->isKeyAttribute($key)) {
+            $value = $this->fromKey($value);
+        }
+
+        return parent::setAttribute($key, $value);
     }
 
     public function getIdAttribute()

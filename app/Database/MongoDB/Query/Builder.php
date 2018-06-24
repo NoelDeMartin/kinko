@@ -32,10 +32,6 @@ class Builder extends NonRelationalBuilder
             $field = substr($field, strlen($this->from . '.'));
         }
 
-        if ($field === '_id') {
-            $value = MongoDB::key($value);
-        }
-
         $type = 'Basic';
 
         $this->wheres[] = compact('type', 'field', 'operator', 'value', 'boolean');

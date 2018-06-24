@@ -16,6 +16,10 @@ class Client extends Model
         'secret',
     ];
 
+    protected $keys = [
+        'user_id',
+    ];
+
     public function authCodes()
     {
         return $this->hasMany(AuthCode::class, 'client_id');

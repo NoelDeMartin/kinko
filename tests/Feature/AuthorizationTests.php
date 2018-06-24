@@ -84,8 +84,10 @@ class AuthorizationTests extends TestCase
         $this->assertEquals('Bearer', $response->json('token_type'));
         $this->assertEquals($user->id, $accessToken->user_id);
         $this->assertEquals($client->id, $accessToken->client_id);
+        $this->assertTrue($accessToken->expires_at->isFuture());
         $this->assertFalse($accessToken->revoked);
         $this->assertEquals($accessToken->id, $refreshToken->access_token_id);
         $this->assertFalse($refreshToken->revoked);
+        $this->assertTrue($refreshToken->expires_at->isFuture());
     }
 }

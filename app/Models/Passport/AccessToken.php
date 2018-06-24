@@ -8,12 +8,16 @@ class AccessToken extends Model
 {
     protected $fillable = [
         'id', 'user_id', 'client_id',
-        'scopes', 'revoked', 'expired_at',
+        'scopes', 'revoked', 'expires_at',
         'created_at', 'updated_at',
     ];
 
     protected $dates = [
         'expires_at', 'created_at', 'updated_at',
+    ];
+
+    protected $keys = [
+        'user_id', 'client_id',
     ];
 
     public $timestamps = false;

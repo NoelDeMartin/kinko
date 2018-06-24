@@ -16,6 +16,10 @@ class Application extends Model
         'schema' => 'document',
     ];
 
+    protected $keys = [
+        'client_id',
+    ];
+
     public function client()
     {
         return $this->belongsTo(Client::class);
