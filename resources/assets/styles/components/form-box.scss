@@ -12,10 +12,19 @@
     }
 
     button[type="submit"] {
-        @apply .w-full .bg-blue .p-2 text-white .rounded;
+        @apply .w-full .bg-blue .p-2 .text-white .rounded;
 
         &:hover {
             @apply .bg-blue-dark;
+        }
+
+        &.secondary {
+            @apply .bg-grey .text-black;
+
+            &:hover {
+                @apply .bg-grey-dark;
+            }
+
         }
 
     }

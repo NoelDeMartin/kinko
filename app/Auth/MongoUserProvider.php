@@ -2,7 +2,7 @@
 
 namespace Kinko\Auth;
 
-use MongoDB\BSON\ObjectId;
+use Kinko\Support\Facades\MongoDB;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Auth\EloquentUserProvider;
 
@@ -15,6 +15,6 @@ class MongoUserProvider extends EloquentUserProvider
 
     public function retrieveById($identifier)
     {
-        return parent::retrieveById(new ObjectId($identifier));
+        return parent::retrieveById(MongoDB::key($identifier));
     }
 }

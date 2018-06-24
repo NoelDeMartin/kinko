@@ -9,8 +9,8 @@ Route::middleware('api')->group(function () {
 Route::middleware(['web', 'auth'])->group(function () {
     Route::namespace('\Laravel\Passport\Http\Controllers')->group(function () {
         Route::get('authorize', 'AuthorizationController@authorize');
-        Route::post('authorize', 'ApproveAuthorizationController@approve');
-        Route::delete('authorize', 'DenyAuthorizationController@deny');
+        Route::post('authorize', 'ApproveAuthorizationController@approve')->name('store.authorize.approve');
+        Route::delete('authorize', 'DenyAuthorizationController@deny')->name('store.authorize.deny');
     });
 
     Route::namespace('\Kinko\Http\Controllers\Store\Api')->group(function () {
@@ -18,3 +18,8 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::post('register', 'ApplicationsController@store')->name('store.register');
     });
 });
+
+Route::post('token', [
+    'uses' => '\Laravel\Passport\Http\Controllers\AccessTokenController@issueToken',
+    'middleware' => 'throttle',
+]);

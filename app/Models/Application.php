@@ -2,6 +2,7 @@
 
 namespace Kinko\Models;
 
+use Kinko\Models\Passport\Client;
 use Kinko\Database\MongoDB\Soukai\Model;
 
 class Application extends Model
@@ -14,4 +15,9 @@ class Application extends Model
     protected $casts = [
         'schema' => 'document',
     ];
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
+    }
 }

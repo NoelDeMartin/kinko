@@ -12,6 +12,12 @@ return [
         'submit'       => 'Accept',
     ],
 
+    'authorization' => [
+        'title' => 'Authorize',
+        'approve' => 'Allow',
+        'deny' => 'Cancel',
+    ],
+
     'loading' => 'Loading',
 
 ];

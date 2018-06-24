@@ -3,6 +3,7 @@
 namespace Kinko\Providers;
 
 use Kinko\Database\DatabaseManager;
+use Kinko\Database\MongoDB\MongoDB;
 use Illuminate\Support\ServiceProvider;
 use Kinko\Database\Soukai\NonRelationalModel;
 use Kinko\Database\MongoDB\Connection as MongoDBConnection;
@@ -26,9 +27,9 @@ class NonRelationalDatabaseServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->singleton('db', function ($app) {
-            return new DatabaseManager($app);
-        });
+        $this->app->singleton('mongodb', MongoDB::class);
+
+        $this->app->singleton('db', DatabaseManager::class);
         $this->app->resolving('db', function ($manager) {
             $manager->resolve('mongodb', function ($config) {
                 return new MongoDBConnection($config);

@@ -4,6 +4,7 @@ namespace Kinko\Database\MongoDB\Query;
 
 use InvalidArgumentException;
 use Illuminate\Support\Collection;
+use Kinko\Support\Facades\MongoDB;
 use Kinko\Database\Query\NonRelationalBuilder;
 
 class Builder extends NonRelationalBuilder
@@ -19,12 +20,20 @@ class Builder extends NonRelationalBuilder
             return $this->whereNested($field, $boolean);
         }
 
-        if ($operator !== '=') {
+        if (!in_array($operator, ['=', '>', '>=', '<', '<='])) {
             throw new InvalidArgumentException('Illegal operator and value combination.');
         }
 
         if ($boolean !== 'and') {
             throw new InvalidArgumentException('Illegal boolean operation.');
+        }
+
+        if (starts_with($field, $this->from . '.')) {
+            $field = substr($field, strlen($this->from . '.'));
+        }
+
+        if ($field === '_id') {
+            $value = MongoDB::key($value);
         }
 
         $type = 'Basic';
@@ -206,7 +215,23 @@ class Builder extends NonRelationalBuilder
         foreach ($this->wheres as $where) {
             switch ($where['type']) {
                 case 'Basic':
-                    $match[$where['field']] = $where['value'];
+                    switch ($where['operator']) {
+                        case '=':
+                            $match[$where['field']] = $where['value'];
+                            break;
+                        case '>':
+                            $match[$where['field']] = ['$gt' => $where['value']];
+                            break;
+                        case '>=':
+                            $match[$where['field']] = ['$gte' => $where['value']];
+                            break;
+                        case '<':
+                            $match[$where['field']] = ['$lt' => $where['value']];
+                            break;
+                        case '<=':
+                            $match[$where['field']] = ['$lte' => $where['value']];
+                            break;
+                    }
                     break;
                 case 'In':
                     $match[$where['field']] = [

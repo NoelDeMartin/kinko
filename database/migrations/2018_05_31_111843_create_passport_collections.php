@@ -13,8 +13,13 @@ class CreatePassportCollections extends Migration
      */
     public function up()
     {
-        Schema::create('auth_codes');
+        Schema::create('auth_codes', function (Blueprint $collection) {
+            $collection->field('id')->unique();
+            $collection->field('client_id')->index();
+            $collection->field('user_id')->index();
+        });
         Schema::create('access_tokens', function (Blueprint $collection) {
+            $collection->field('id')->unique();
             $collection->field('user_id')->index();
         });
         Schema::create('clients', function (Blueprint $collection) {

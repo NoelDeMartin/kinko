@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
 use InvalidArgumentException;
 use Illuminate\Database\ConnectionInterface;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\ConnectionResolverInterface;
 
 class DatabaseManager implements ConnectionResolverInterface
@@ -16,7 +17,7 @@ class DatabaseManager implements ConnectionResolverInterface
 
     protected $resolvers = [];
 
-    public function __construct($app)
+    public function __construct(Application $app)
     {
         $this->app = $app;
     }

@@ -11,4 +11,23 @@ class Client extends Model
         'personal_access_client', 'password_client',
         'revoked',
     ];
+
+    protected $hidden = [
+        'secret',
+    ];
+
+    public function authCodes()
+    {
+        return $this->hasMany(AuthCode::class, 'client_id');
+    }
+
+    public function tokens()
+    {
+        return $this->hasMany(AccessToken::class, 'client_id');
+    }
+
+    public function firstParty()
+    {
+        return $this->personal_access_client || $this->password_client;
+    }
 }

@@ -2,9 +2,9 @@
 
 namespace Kinko\Database\MongoDB\Soukai;
 
-use Kinko\Database\MongoDB\Query\Builder;
 use Kinko\Database\Soukai\NonRelationalModel;
-use Kinko\Database\Soukai\NonRelationalBuilder;
+use Kinko\Database\MongoDB\Query\Builder as QueryBuilder;
+use Kinko\Database\MongoDB\Soukai\Builder as SoukaiBuilder;
 
 class Model extends NonRelationalModel
 {
@@ -18,7 +18,7 @@ class Model extends NonRelationalModel
      */
     public function newEloquentBuilder($query)
     {
-        return new NonRelationalBuilder($query);
+        return new SoukaiBuilder($query);
     }
 
     /**
@@ -30,7 +30,7 @@ class Model extends NonRelationalModel
     {
         $connection = $this->getConnection();
 
-        return new Builder(
+        return new QueryBuilder(
             $connection,
             $connection->getQueryGrammar(),
             $connection->getPostProcessor()
@@ -39,6 +39,10 @@ class Model extends NonRelationalModel
 
     public function getIdAttribute()
     {
-        return isset($this->attributes['_id']) ? (string) $this->attributes['_id'] : null;
+        return isset($this->attributes['id'])
+            ? $this->attributes['id']
+            : (isset($this->attributes['_id'])
+                ? (string) $this->attributes['_id']
+                : null);
     }
 }
