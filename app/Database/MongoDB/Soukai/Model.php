@@ -68,4 +68,15 @@ class Model extends NonRelationalModel
                 ? (string) $this->attributes['_id']
                 : null);
     }
+
+    public function getCasts()
+    {
+        $keyCasts = [];
+
+        foreach ($this->keys as $key) {
+            $keyCasts[$key] = 'string';
+        }
+
+        return array_merge($keyCasts, parent::getCasts());
+    }
 }
