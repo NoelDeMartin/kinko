@@ -2,8 +2,6 @@
 
 namespace Kinko\Database\MongoDB\Soukai;
 
-use MongoDB\Model\BSONArray;
-use MongoDB\Model\BSONDocument;
 use Kinko\Support\Facades\MongoDB;
 use Kinko\Database\Soukai\NonRelationalModel;
 use Kinko\Database\MongoDB\Soukai\Concerns\HasKeys;
@@ -90,39 +88,9 @@ class Model extends NonRelationalModel
 
         switch ($this->getCastType($key)) {
             case 'document':
-                return $this->castDocument($value);
+                return MongoDB::convertDocument($value);
             default:
                 return parent::castAttribute($key, $value);
         }
-    }
-
-    private function castDocument($document)
-    {
-        $document = (array) $document;
-
-        foreach ($document as $key => $value) {
-            if ($value instanceof BSONDocument) {
-                $document[$key] = $this->castDocument($value);
-            } elseif ($value instanceof BSONArray) {
-                $document[$key] = $this->castArray($value);
-            }
-        }
-
-        return $document;
-    }
-
-    private function castArray($array)
-    {
-        $array = (array) $array;
-
-        foreach ($array as $key => $item) {
-            if ($item instanceof BSONDocument) {
-                $array[$key] = $this->castDocument($item);
-            } elseif ($item instanceof BSONArray) {
-                $array[$key] = $this->castArray($item);
-            }
-        }
-
-        return $array;
     }
 }

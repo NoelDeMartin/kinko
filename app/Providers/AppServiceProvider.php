@@ -3,12 +3,16 @@
 namespace Kinko\Providers;
 
 use GuzzleHttp\Client;
-use Kinko\GraphQL\GraphQL;
-use Illuminate\Support\Str;
 use GuzzleHttp\ClientInterface;
+
+use Illuminate\Support\Str;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Resources\Json\Resource;
+
+use Kinko\GraphQL\GraphQL;
+use Kinko\GraphQL\GraphQLDatabaseBridge;
+use Kinko\Database\MongoDB\GraphQL\Bridge;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -39,7 +43,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->bind('graphql', GraphQL::class);
+        $this->app->singleton('graphql', GraphQL::class);
+        $this->app->bind(GraphQLDatabaseBridge::class, Bridge::class);
         $this->app->bind(ClientInterface::class, Client::class);
     }
 }
