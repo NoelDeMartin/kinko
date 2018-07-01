@@ -18,7 +18,7 @@ class ApplicationSchemaJson implements Rule
     public function passes($attribute, $value)
     {
         try {
-            GraphQL::parseJson($value, true);
+            GraphQL::parseJsonSchema($value, true);
 
             return true;
         } catch (Exception $e) {

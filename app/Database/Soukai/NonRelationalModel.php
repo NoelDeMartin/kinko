@@ -2,7 +2,6 @@
 
 namespace Kinko\Database\Soukai;
 
-use MongoDB\Model\BSONDocument;
 use Illuminate\Database\Eloquent\Model;
 use Kinko\Database\Query\NonRelationalBuilder as QueryBuilder;
 
@@ -41,32 +40,5 @@ class NonRelationalModel extends Model
         }
 
         return $this->collection;
-    }
-
-    protected function castAttribute($key, $value)
-    {
-        if (is_null($value)) {
-            return $value;
-        }
-
-        switch ($this->getCastType($key)) {
-            case 'document':
-                return $this->castDocument($value);
-            default:
-                return parent::castAttribute($key, $value);
-        }
-    }
-
-    private function castDocument($document)
-    {
-        $document = (array) $document;
-
-        foreach ($document as $key => $value) {
-            if ($value instanceof BSONDocument) {
-                $document[$key] = $this->castDocument($value);
-            }
-        }
-
-        return $document;
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Kinko\Http\Controllers\Store\Api;
+namespace Kinko\Http\Controllers\Store\Web;
 
 use Exception;
 use Kinko\Models\Application;
@@ -24,6 +24,8 @@ class ApplicationsController extends Controller
 
     public function store(StoreApplicationRequest $request)
     {
+        // TODO require permissions as well, see: https://www.graph.cool/docs/tutorials/auth/authorization-for-a-cms-miesho4goo
+
         $client = Client::create([
             'user_id' => Auth::id(),
             'name' => $request->input('name'),
@@ -40,7 +42,7 @@ class ApplicationsController extends Controller
             'domain' => $request->input('domain'),
             'redirect_url' => $request->input('redirect_url'),
             'callback_url' => $request->input('callback_url'),
-            'schema' => GraphQL::parseJson($request->input('schema'))->toArray(),
+            'schema' => GraphQL::parseJsonSchema($request->input('schema')),
             'client_id' => $client->id,
         ]);
 

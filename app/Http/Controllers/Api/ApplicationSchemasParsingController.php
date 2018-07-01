@@ -27,11 +27,7 @@ class ApplicationSchemasParsingController extends Controller
                 throw new Exception;
             }
 
-            $schema = GraphQL::parseGraphQLSchema($response->getBody()->getContents(), true);
-
-            // TODO return specific validation errors if necessary
-
-            return $schema->toArray();
+            return GraphQL::parseGraphQLSchema($response->getBody()->getContents(), true);
         } catch (Exception $e) {
             throw new ApiError('Could not get application schema from ' . $url);
         }

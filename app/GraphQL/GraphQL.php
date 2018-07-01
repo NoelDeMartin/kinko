@@ -2,24 +2,33 @@
 
 namespace Kinko\GraphQL;
 
-use GraphQL\Type\Schema;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+
+use GraphQL\Utils\AST;
 use GraphQL\Error\Error;
+use GraphQL\Type\Schema;
+use GraphQL\Language\Parser;
 use GraphQL\Utils\BuildSchema;
 use GraphQL\Type\Introspection;
 use GraphQL\Type\Definition\Type;
-use GraphQL\Type\Definition\NonNull;
+use GraphQL\Server\StandardServer;
+use GraphQL\Language\AST\NodeKind;
 use GraphQL\Type\Definition\ObjectType;
+
+use Illuminate\Support\Facades\App;
+
+use Kinko\Models\Application;
 
 class GraphQL
 {
-    /**
-     * Parses GraphQL Schema into ApplicationSchema.
-     */
     public function parseGraphQLSchema($source, $validate = false)
     {
-        $schema = BuildSchema::build($source);
+        $node = Parser::parse($source);
 
         if ($validate) {
+            $schema = BuildSchema::build($node);
+
             if (!is_null($schema->getQueryType())) {
                 throw new Error('Application schema must not contain internal types');
             }
@@ -30,69 +39,66 @@ class GraphQL
             $schema->assertValid();
         }
 
-        return $this->convertToApplicationSchema($schema);
+        return AST::toArray($node);
     }
 
-    /**
-     * Parses Json into ApplicationSchema.
-     */
-    public function parseJson($source, $validate = false)
+    public function parseJsonSchema($source, $validate = false)
     {
         $schema = json_decode($source, true);
-        $applicationSchema = new ApplicationSchema;
-        $internalTypes = Type::getInternalTypes() + Introspection::getTypes();
 
-        foreach ($schema as $typeName => $type) {
-            $applicationType = new ApplicationType;
+        if ($validate) {
+            $node = AST::fromArray($schema);
+            $internalTypes = Type::getInternalTypes() + Introspection::getTypes();
 
-            if ($validate && isset($internalTypes[$typeName])) {
-                throw new Error('Application schema must not contain internal types');
+            foreach ($node->definitions as $definition) {
+                switch ($definition->kind) {
+                    case NodeKind::OBJECT_TYPE_DEFINITION:
+                        if (isset($internalTypes[$definition->name->value])) {
+                            throw new Error('Application schema must not contain internal types definition');
+                        }
+                        break;
+                    case NodeKind::SCHEMA_DEFINITION:
+                    case NodeKind::SCALAR_TYPE_DEFINITION:
+                    case NodeKind::INTERFACE_TYPE_DEFINITION:
+                    case NodeKind::ENUM_TYPE_DEFINITION:
+                    case NodeKind::UNION_TYPE_DEFINITION:
+                    case NodeKind::INPUT_OBJECT_TYPE_DEFINITION:
+                    case NodeKind::DIRECTIVE_DEFINITION:
+                        throw new Error('Application schema must only contain type definitions');
+                }
             }
-
-            foreach ($type as $fieldName => $field) {
-                $applicationType->addField($fieldName, $field['type'], $field['required']);
-            }
-
-            $applicationSchema->addType($typeName, $applicationType);
         }
 
-        return $applicationSchema;
+        return $schema;
     }
 
-    private function convertToApplicationSchema(Schema $schema)
+    public function query(Application $application, ServerRequestInterface $request)
     {
-        $applicationSchema = new ApplicationSchema;
-        $types = $schema->getTypeMap();
-        $internalTypes = Type::getInternalTypes() + Introspection::getTypes();
+        // TODO build CRUD queries similar to graphcool: https://gist.github.com/gc-codesnippets/cc487a35a39f59e6b7cb383734217050
+        $queryType = new ObjectType([
+            'name' => 'Query',
+            'fields' => [
+                'echo' => [
+                    'type' => Type::string(),
+                    'args' => [
+                        'message' => Type::nonNull(Type::string()),
+                    ],
+                    'resolve' => function ($root, $args) {
+                        return $root['prefix'] . $args['message'];
+                    }
+                ],
+            ],
+        ]);
 
-        foreach ($types as $name => $type) {
-            if (isset($internalTypes[$name])) {
-                continue;
-            }
+        // TODO refactor to use only one constructor
+        $schema = BuildSchema::build(AST::fromArray($application->schema));
+        $schema->getConfig()->setQuery($queryType);
+        $schema = new Schema($schema->getConfig());
 
-            $applicationSchema->addType($name, $this->convertToApplicationType($type));
-        }
+        $rootValue = ['prefix' => 'Hello '];
+        $server = new StandardServer(compact('schema', 'rootValue'));
 
-        return $applicationSchema;
-    }
-
-    private function convertToApplicationType(ObjectType $type)
-    {
-        $applicationType = new ApplicationType;
-        $fields = $type->getFields();
-
-        foreach ($fields as $field) {
-            $fieldType = $field->getType();
-            $required = false;
-
-            if ($fieldType instanceof NonNull) {
-                $required = true;
-                $fieldType = $fieldType->getWrappedType();
-            }
-
-            $applicationType->addField($field->name, $fieldType->name, $required);
-        }
-
-        return $applicationType;
+        $response = App::make(ResponseInterface::class);
+        return $server->processPsrRequest($request, $response, $response->getBody());
     }
 }
