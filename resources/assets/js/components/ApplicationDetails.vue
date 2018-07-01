@@ -1,5 +1,8 @@
 <template>
-    <div v-if="application" class="my-2">
+    <p v-if="error" class="my-2 text-error">
+        {{ error }}
+    </p>
+    <div v-else class="my-2">
         <p class="mb-2">
             <strong>{{ trans('store.registration.domain') }}:</strong>
             {{ domain }}
@@ -15,15 +18,14 @@
         <p><strong>{{ trans('store.registration.description') }}:</strong></p>
         <p class="mb-2">{{ description }}</p>
         <p><strong>{{ trans('store.registration.schema') }}:</strong></p>
-        <GraphQLSchema :schema="schema" />
-        <slot :schema="schema" />
+        <template v-if="schema">
+            <GraphQLSchema :schema="schema" />
+            <slot :schema="schema" />
+        </template>
+        <p v-else class="my-2">
+            {{ trans('store.loading') }} <code>{{ schemaUrl }}</code>...
+        </p>
     </div>
-    <p v-else-if="error" class="my-2 text-error">
-        {{ error }}
-    </p>
-    <p v-else class="my-2">
-        {{ trans('store.loading') }} <code>{{ schemaUrl }}</code>...
-    </p>
 </template>
 
 <script lang="ts">

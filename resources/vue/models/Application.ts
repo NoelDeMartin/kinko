@@ -7,8 +7,28 @@ export interface ApplicationJson {
     schema: Schema;
 }
 
+interface NameNode { value: string; }
+
+interface NonNullType {
+    kind: 'NonNullType';
+    type: Type;
+}
+
+interface NamedType {
+    kind: 'NamedType';
+    name: NameNode;
+}
+
+type Type = NonNullType | NamedType;
+
 export interface Schema {
-    [field: string]: SchemaField;
+    definitions: Array<{
+        name: NameNode,
+        fields: Array<{
+            name: NameNode,
+            type: Type,
+        }>,
+    }>;
 }
 
 export interface SchemaField {

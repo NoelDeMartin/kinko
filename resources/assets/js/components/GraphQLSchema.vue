@@ -1,15 +1,20 @@
 <template>
     <div class="pt-2">
-        <table v-for="(type, typeName) of schema" :key="typeName" class="graphql-type">
+        <table v-for="(definition, index) of schema.definitions" :key="index" class="graphql-type">
             <thead>
                 <tr>
-                    <th colspan="2">{{ typeName }}</th>
+                    <th colspan="2">{{ definition.name.value }}</th>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(field, fieldName) of type" :key="fieldName">
-                    <td>{{ fieldName }}</td>
-                    <td>{{ field.type }} <span v-if="field.required">required</span></td>
+                <tr v-for="field of definition.fields" :key="field.name.value">
+                    <td>{{ field.name.value }}</td>
+                    <td v-if="field.type.kind === 'NonNullType'">
+                        {{ field.type.type.name.value }} <span>required</span>
+                    </td>
+                    <td v-else>
+                        {{ field.type.name.value }}
+                    </td>
                 </tr>
             </tbody>
         </table>

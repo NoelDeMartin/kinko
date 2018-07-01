@@ -23,8 +23,8 @@ class CreateApplicationRequest extends FormRequest
             'name' => 'string',
             'description' => 'required|string',
             'domain' => ['required', new Domain],
-            'callback_url' => ['required', new UrlDomain($this, 'domain')],
-            'redirect_url' => ['required', new UrlDomain($this, 'domain')],
+            'callback_url' => ['required', 'url', new UrlDomain($this, 'domain')],
+            'redirect_url' => ['required', 'url', new UrlDomain($this, 'domain')],
             'schema_url' => 'required|url',
         ];
     }
