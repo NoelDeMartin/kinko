@@ -26,10 +26,12 @@ if (!function_exists('load_stub')) {
     function load_stub($path)
     {
         $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $contents = file_get_contents(stubs_path($path));
         switch ($extension) {
             case 'json':
-                return json_decode(file_get_contents(stubs_path($path)), true);
-                break;
+                return json_decode($contents, true);
+            default:
+                return $contents;
         }
     }
 }

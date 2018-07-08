@@ -74,7 +74,7 @@ class ApplicationTests extends TestCase
             'schema' => json_encode($schema),
         ]);
 
-        $response->assertRedirect($redirectUrl);
+        $response->assertRedirect($redirectUrl . '?state=' . $state);
 
         $this->assertEquals(1, Application::count());
         $this->assertEquals(1, Client::count());
@@ -82,11 +82,11 @@ class ApplicationTests extends TestCase
         $application = Application::first();
         $client = Client::first();
 
-        $this->assertGuzzleCalled($callbackUrl . '?' . http_build_query([
+        $this->assertGuzzleCalled($callbackUrl, 'POST', [], [
             'state' => $state,
             'client_id' => $client->id,
             'client_secret' => $client->secret,
-        ]));
+        ]);
 
         $this->assertEquals($name, $application->name);
         $this->assertEquals($domain, $application->domain);

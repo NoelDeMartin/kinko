@@ -46,9 +46,10 @@ class ApplicationsController extends Controller
             'client_id' => $client->id,
         ]);
 
-        $this->sendApplicationDetails($application, $client, $request->input('state'));
+        $state = $request->input('state');
+        $this->sendApplicationDetails($application, $client, $state);
 
-        return redirect($application->redirect_url);
+        return redirect($application->redirect_url . '?' . http_build_query(compact('state')));
     }
 
     private function sendApplicationDetails($application, $client, $state)
@@ -56,13 +57,15 @@ class ApplicationsController extends Controller
         $guzzleClient = App::make(ClientInterface::class);
 
         try {
-            $response = $guzzleClient->get(
-                $application->callback_url . '?' . http_build_query([
+            // TODO send application schema information
+
+            $response = $guzzleClient->post($application->callback_url, [
+                'form_params' => [
                     'state' => $state,
                     'client_id' => $client->id,
                     'client_secret' => $client->secret,
-                ])
-            );
+                ],
+            ]);
 
             if ($response->getStatusCode() !== 200) {
                 throw new Exception;

@@ -6,8 +6,7 @@ Route::middleware('api')->group(function () {
     });
 
     Route::namespace('\Kinko\Http\Controllers\Store\Api')->group(function () {
-        Route::get('/', 'GraphQLController');
-        Route::post('/', 'GraphQLController');
+        Route::any('/', 'GraphQLController');
     });
 });
 

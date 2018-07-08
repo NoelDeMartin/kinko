@@ -4,8 +4,11 @@ namespace Kinko\GraphQL;
 
 use GraphQL\Error\Error;
 use GraphQL\Type\Schema;
+use GraphQL\Utils\BuildSchema;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Language\AST\NodeKind;
+use GraphQL\Type\Definition\IDType;
+use GraphQL\Type\Definition\NonNull;
 use GraphQL\Utils\ASTDefinitionBuilder;
 use GraphQL\Type\Definition\ObjectType;
 
@@ -15,6 +18,7 @@ class SchemaBuilder
     protected $db;
 
     protected $types = null;
+    protected $customTypes = null;
     protected $queries = null;
     protected $mutations = null;
 
@@ -28,62 +32,51 @@ class SchemaBuilder
     {
         $schema = $this->build(false);
 
-        if (!is_null($schema->getQueryType())) {
-            throw new Error('Application schema must not contain internal types');
+        foreach ($this->customTypes as $type) {
+            $fields = $type->getFields();
+            if (
+                !isset($fields['id']) ||
+                !($fields['id']->getType() instanceof NonNull) ||
+                !($fields['id']->getType()->getWrappedType() instanceof IDType)
+            ) {
+                throw new Error('Root types must define id field');
+            }
         }
 
+        if (!is_null($schema->getQueryType())) {
+            throw new Error('Application schema must not declare queries');
+        }
         $schema->getConfig()->setQuery(new ObjectType(['name' => 'Query']));
-
-        // TODO validate that only schema is defined, not queries, mutations nor others
 
         $schema->assertValid();
     }
 
     public function build($withOperations = true)
     {
-        $this->loadTypes();
+        $schema = BuildSchema::build($this->ast);
 
-        $config = ['types' => $this->types];
+        $builtInTypes = Type::getAllBuiltInTypes();
+        $this->types = $schema->getTypeMap();
+        $this->customTypes = array_filter($this->types, function ($type) use ($builtInTypes) {
+            return !isset($builtInTypes[$type->name]);
+        });
 
         if ($withOperations) {
             $this->loadOperations();
 
-            $config['query'] = new ObjectType([
+            $schema->getConfig()->setQuery(new ObjectType([
                 'name' => 'Query',
                 'fields' => $this->queries,
-            ]);
-            $config['mutation'] = new ObjectType([
+            ]));
+            $schema->getConfig()->setMutation(new ObjectType([
                 'name' => 'Mutation',
                 'fields' => $this->mutations,
-            ]);
+            ]));
+
+            $schema = new Schema($schema->getConfig());
         }
 
-        return new Schema($config);
-    }
-
-    private function loadTypes()
-    {
-        if (is_null($this->types)) {
-            $this->types = [];
-
-            $typeDefintionsMap = [];
-            foreach ($this->ast->definitions as $definition) {
-                switch ($definition->kind) {
-                    case NodeKind::OBJECT_TYPE_DEFINITION:
-                        $typeDefintionsMap[$definition->name->value] = $definition;
-                        break;
-                }
-            }
-
-            $options = [];
-            $resolveType = function ($typeName) {
-                throw new Error("Type $typeName not found in document.");
-            };
-            $defintionBuilder = new ASTDefinitionBuilder($typeDefintionsMap, $options, $resolveType);
-            $this->types = array_map(function ($definition) use ($defintionBuilder) {
-                return $defintionBuilder->buildType($definition);
-            }, $typeDefintionsMap);
-        }
+        return $schema;
     }
 
     private function loadOperations()
@@ -99,7 +92,7 @@ class SchemaBuilder
             ];
             $this->mutations = [];
 
-            foreach ($this->types as $type) {
+            foreach ($this->customTypes as $type) {
                 $this->addTypeOperations($type);
             }
         }
