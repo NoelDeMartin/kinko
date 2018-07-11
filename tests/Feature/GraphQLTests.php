@@ -48,15 +48,17 @@ class GraphQLTests extends TestCase
 
         $name = $this->faker->name;
         $email = $this->faker->email;
+        $created_at = time();
 
-        $response = $this->graphql('mutation {createUser(name: "' . $name . '", email: "' . $email . '") {id, name, email}}');
+        $response = $this->graphql("mutation {createUser(name: \"$name\", email: \"$email\", created_at: $created_at) {id, name, email, created_at}}");
 
         $response->assertSuccessful();
-        $response->assertJsonStructure(['data' => ['createUser' => ['id', 'name', 'email']]]);
+        $response->assertJsonStructure(['data' => ['createUser' => ['id', 'name', 'email', 'created_at']]]);
 
         $this->assertEquals(1, DB::collection('store-users')->count());
         $this->assertEquals($name, $response->json('data.createUser.name'));
         $this->assertEquals($email, $response->json('data.createUser.email'));
+        $this->assertEquals($created_at, $response->json('data.createUser.created_at'));
     }
 
     private function graphql($query)

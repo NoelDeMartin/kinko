@@ -3,4 +3,5 @@ type User {
     name: String!
     email: String!
     age: Int
+    created_at: Date!
 }

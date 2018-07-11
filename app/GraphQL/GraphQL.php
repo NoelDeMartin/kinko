@@ -21,7 +21,7 @@ class GraphQL
 
         if ($validate) {
             $builder = new SchemaBuilder($ast);
-            $builder->validate();
+            $builder->build(true);
         }
 
         return AST::toArray($ast);
@@ -35,7 +35,7 @@ class GraphQL
             $ast = AST::fromArray($schema);
 
             $builder = new SchemaBuilder($ast);
-            $builder->validate();
+            $builder->build(true);
         }
 
         return $schema;

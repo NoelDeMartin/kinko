@@ -6,9 +6,11 @@ use GraphQL\Error\Error;
 use GraphQL\Type\Schema;
 use GraphQL\Utils\BuildSchema;
 use GraphQL\Type\Definition\Type;
+use Kinko\GraphQL\Types\DateType;
 use GraphQL\Language\AST\NodeKind;
 use GraphQL\Type\Definition\IDType;
 use GraphQL\Type\Definition\NonNull;
+use GraphQL\Type\Definition\Directive;
 use GraphQL\Utils\ASTDefinitionBuilder;
 use GraphQL\Type\Definition\ObjectType;
 
@@ -19,8 +21,7 @@ class SchemaBuilder
 
     protected $types = null;
     protected $customTypes = null;
-    protected $queries = null;
-    protected $mutations = null;
+    protected $customScalarTypes = null;
 
     public function __construct($ast, $db = null)
     {
@@ -28,83 +29,123 @@ class SchemaBuilder
         $this->db = $db;
     }
 
-    public function validate()
+    public function build($validate = false)
     {
-        $schema = $this->build(false);
+        $config = [];
+        $typeDefinitions = [];
+        foreach ($this->ast->definitions as $definition) {
+            switch ($definition->kind) {
+                case NodeKind::SCHEMA_DEFINITION:
+                    if (isset($config['astNode'])) {
+                        throw new Error('Must provide only one schema definition.');
+                    }
+                    $config['astNode'] = $definition;
+                    break;
+                case NodeKind::SCALAR_TYPE_DEFINITION:
+                case NodeKind::OBJECT_TYPE_DEFINITION:
+                case NodeKind::INTERFACE_TYPE_DEFINITION:
+                case NodeKind::ENUM_TYPE_DEFINITION:
+                case NodeKind::UNION_TYPE_DEFINITION:
+                case NodeKind::INPUT_OBJECT_TYPE_DEFINITION:
+                    $name = $definition->name->value;
+                    if (isset($typeDefinitions[$name])) {
+                        throw new Error("Type [$name] was defined more than once.");
+                    }
+                    $typeDefinitions[$name] = $definition;
+                    break;
+                case NodeKind::DIRECTIVE_DEFINITION:
+                    throw new Error('Directive definitions are not supported.');
+                    break;
+            }
+        }
+
+        $this->customScalarTypes = $this->buildCustomScalarTypes();
+        $this->customTypes = $this->buildCustomTypes($typeDefinitions);
+        $this->types = array_merge($this->customScalarTypes, $this->customTypes, Type::getAllBuiltInTypes());
+
+        $config['typesLoader'] = function ($name) {
+            return $this->types[$name];
+        };
+
+        $config = array_merge($config, $this->buildOperations());
+
+        if ($validate) {
+            $this->validateDefinitions($config, $typeDefinitions);
+
+            $schema = new Schema($config);
+            $schema->assertValid();
+
+            return $schema;
+        } else {
+            return new Schema($config);
+        }
+    }
+
+    private function buildCustomScalarTypes()
+    {
+        return [
+            'Date' => new DateType,
+        ];
+    }
+
+    private function buildCustomTypes($typeDefinitions)
+    {
+        $customTypes = [];
+
+        $definitionBuilder = new ASTDefinitionBuilder(
+            $typeDefinitions,
+            [],
+            function ($name) {
+                if (isset($this->customScalarTypes[$name])) {
+                    return $this->customScalarTypes[$name];
+                }
+
+                throw new Error("Type [$name] not found in document.");
+            }
+        );
+
+        foreach ($typeDefinitions as $name => $definition) {
+            $customTypes[$name] = $definitionBuilder->buildType($name);
+        }
+
+        return $customTypes;
+    }
+
+    private function buildOperations()
+    {
+        $queries = [
+            'ping' => [
+                'type' => Type::nonNull(Type::string()),
+                'resolve' => function ($root, $args) {
+                    return 'pong';
+                },
+            ],
+        ];
+        $mutations = [];
 
         foreach ($this->customTypes as $type) {
-            $fields = $type->getFields();
-            if (
-                !isset($fields['id']) ||
-                !($fields['id']->getType() instanceof NonNull) ||
-                !($fields['id']->getType()->getWrappedType() instanceof IDType)
-            ) {
-                throw new Error('Root types must define id field');
-            }
+            $this->buildTypeOperations($type, $queries, $mutations);
         }
 
-        if (!is_null($schema->getQueryType())) {
-            throw new Error('Application schema must not declare queries');
-        }
-        $schema->getConfig()->setQuery(new ObjectType(['name' => 'Query']));
-
-        $schema->assertValid();
-    }
-
-    public function build($withOperations = true)
-    {
-        $schema = BuildSchema::build($this->ast);
-
-        $builtInTypes = Type::getAllBuiltInTypes();
-        $this->types = $schema->getTypeMap();
-        $this->customTypes = array_filter($this->types, function ($type) use ($builtInTypes) {
-            return !isset($builtInTypes[$type->name]);
-        });
-
-        if ($withOperations) {
-            $this->loadOperations();
-
-            $schema->getConfig()->setQuery(new ObjectType([
+        return [
+            'query' => new ObjectType([
                 'name' => 'Query',
-                'fields' => $this->queries,
-            ]));
-            $schema->getConfig()->setMutation(new ObjectType([
+                'fields' => $queries,
+            ]),
+            'mutation' => new ObjectType([
                 'name' => 'Mutation',
-                'fields' => $this->mutations,
-            ]));
-
-            $schema = new Schema($schema->getConfig());
-        }
-
-        return $schema;
+                'fields' => $mutations,
+            ]),
+        ];
     }
 
-    private function loadOperations()
-    {
-        if (is_null($this->queries) && is_null($this->mutations)) {
-            $this->queries = [
-                'ping' => [
-                    'type' => Type::nonNull(Type::string()),
-                    'resolve' => function ($root, $args) {
-                        return 'pong';
-                    },
-                ],
-            ];
-            $this->mutations = [];
-
-            foreach ($this->customTypes as $type) {
-                $this->addTypeOperations($type);
-            }
-        }
-    }
-
-    private function addTypeOperations($type)
+    private function buildTypeOperations($type, &$queries, &$mutations)
     {
         $singular = $type->name;
         $plural = str_plural($singular);
 
         // TODO build CRUD queries similar to graphcool: https://gist.github.com/gc-codesnippets/cc487a35a39f59e6b7cb383734217050
-        $this->queries['all' . $plural] = [
+        $queries['all' . $plural] = [
             'type' => Type::nonNull(Type::listOf(Type::nonNull($type))),
             'args' => [
                 // TODO declare filters
@@ -117,9 +158,9 @@ class SchemaBuilder
             },
         ];
 
-        $this->mutations['create' . $singular] = [
+        $mutations['create' . $singular] = [
             'type' => Type::nonNull($type),
-            'args' => $this->buildTypeArgs($type),
+            'args' => $this->buildTypeConstructorArguments($type),
             'resolve' => function ($root, $args) use ($type) {
                 $args['id'] = $this->db->query($type)->insertGetId($args);
 
@@ -128,10 +169,9 @@ class SchemaBuilder
         ];
     }
 
-    private function buildTypeArgs($type)
+    private function buildTypeConstructorArguments($type)
     {
-        $args = [];
-        $internalTypes = Type::getInternalTypes();
+        $arguments = [];
 
         foreach ($type->astNode->fields as $field) {
             $required = false;
@@ -147,15 +187,41 @@ class SchemaBuilder
             if ($typeName === Type::ID) {
                 // TODO don't skip for foreign keys, only for primary keys
                 continue;
-            } elseif (isset($internalTypes[$typeName])) {
-                $type = $internalTypes[$typeName];
             } else {
                 $type = $this->types[$typeName];
             }
 
-            $args[$field->name->value] = $required ? Type::nonNull($type) : $type;
+            $arguments[$field->name->value] = $required ? Type::nonNull($type) : $type;
         }
 
-        return $args;
+        return $arguments;
+    }
+
+    private function validateDefinitions($config, $typeDefinitions)
+    {
+        if (
+            $this->schemaDefinesOperations($config) ||
+            isset($typeDefinitions['Query']) ||
+            isset($typeDefinitions['Mutation']) ||
+            isset($typeDefinitions['Subscription'])
+        ) {
+            throw new Error('Application schema must not declare queries, mutations nor subscriptions');
+        }
+
+        foreach ($this->customTypes as $type) {
+            $fields = $type->getFields();
+            if (!isset($fields['id']) ||
+                !($fields['id']->getType() instanceof NonNull) ||
+                !($fields['id']->getType()->getWrappedType() instanceof IDType)) {
+                throw new Error('Root types must define id field');
+            }
+        }
+    }
+
+    private function schemaDefinesOperations($config)
+    {
+        // TODO check $config['astNode]
+
+        return false;
     }
 }
