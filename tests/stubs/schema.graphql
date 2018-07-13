@@ -3,5 +3,6 @@ type User {
     name: String!
     email: String!
     age: Int
-    created_at: Date!
+    created_at: Date! @auto
+    updated_at: Date! @auto
 }

@@ -3,7 +3,6 @@
 namespace Kinko\GraphQL;
 
 use GraphQL\Error\Error;
-use GraphQL\Type\Schema;
 use GraphQL\Utils\BuildSchema;
 use GraphQL\Type\Definition\Type;
 use Kinko\GraphQL\Types\DateType;
@@ -13,8 +12,9 @@ use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\Directive;
 use GraphQL\Utils\ASTDefinitionBuilder;
 use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Schema as GraphQLSchema;
 
-class SchemaBuilder
+class Schema
 {
     protected $ast;
     protected $db;
@@ -29,7 +29,39 @@ class SchemaBuilder
         $this->db = $db;
     }
 
-    public function build($validate = false)
+    public function validate()
+    {
+        $parsedAST = $this->parseAST();
+
+        $this->validateDefinitions(
+            $parsedAST['schemaConfig'],
+            $parsedAST['typeDefinitions']
+        );
+
+        $schema = new GraphQLSchema($parsedAST['schemaConfig']);
+        $schema->assertValid();
+
+        return $schema;
+    }
+
+    public function build()
+    {
+        $parsedAST = $this->parseAST();
+
+        return new GraphQLSchema($parsedAST['schemaConfig']);
+    }
+
+    public function getType($name)
+    {
+        return isset($this->types[$name]) ? $this->types[$name] : null;
+    }
+
+    public function getDatabaseBridge()
+    {
+        return $this->db;
+    }
+
+    private function parseAST()
     {
         $config = [];
         $typeDefinitions = [];
@@ -67,18 +99,10 @@ class SchemaBuilder
             return $this->types[$name];
         };
 
-        $config = array_merge($config, $this->buildOperations());
-
-        if ($validate) {
-            $this->validateDefinitions($config, $typeDefinitions);
-
-            $schema = new Schema($config);
-            $schema->assertValid();
-
-            return $schema;
-        } else {
-            return new Schema($config);
-        }
+        return [
+            'schemaConfig' => array_merge($config, $this->buildOperations()),
+            'typeDefinitions' => $typeDefinitions,
+        ];
     }
 
     private function buildCustomScalarTypes()
@@ -141,60 +165,9 @@ class SchemaBuilder
 
     private function buildTypeOperations($type, &$queries, &$mutations)
     {
-        $singular = $type->name;
-        $plural = str_plural($singular);
-
-        // TODO build CRUD queries similar to graphcool: https://gist.github.com/gc-codesnippets/cc487a35a39f59e6b7cb383734217050
-        $queries['all' . $plural] = [
-            'type' => Type::nonNull(Type::listOf(Type::nonNull($type))),
-            'args' => [
-                // TODO declare filters
-            ],
-            'resolve' => function ($root, $args) use ($type) {
-                // TODO apply filters
-                return $this->db->query($type)->get()->map(function($result) {
-                    return $this->db->convertResult($result);
-                });
-            },
-        ];
-
-        $mutations['create' . $singular] = [
-            'type' => Type::nonNull($type),
-            'args' => $this->buildTypeConstructorArguments($type),
-            'resolve' => function ($root, $args) use ($type) {
-                $args['id'] = $this->db->query($type)->insertGetId($args);
-
-                return $args;
-            },
-        ];
-    }
-
-    private function buildTypeConstructorArguments($type)
-    {
-        $arguments = [];
-
-        foreach ($type->astNode->fields as $field) {
-            $required = false;
-            $type = $field->type;
-
-            if ($type->kind === NodeKind::NON_NULL_TYPE) {
-                $required = true;
-                $type = $type->type;
-            }
-
-            $typeName = $type->name->value;
-
-            if ($typeName === Type::ID) {
-                // TODO don't skip for foreign keys, only for primary keys
-                continue;
-            } else {
-                $type = $this->types[$typeName];
-            }
-
-            $arguments[$field->name->value] = $required ? Type::nonNull($type) : $type;
-        }
-
-        return $arguments;
+        $model = new SchemaModel($this, $type);
+        $model->buildQueries($queries);
+        $model->buildMutations($mutations);
     }
 
     private function validateDefinitions($config, $typeDefinitions)
@@ -210,9 +183,9 @@ class SchemaBuilder
 
         foreach ($this->customTypes as $type) {
             $fields = $type->getFields();
-            if (!isset($fields['id']) ||
-                !($fields['id']->getType() instanceof NonNull) ||
-                !($fields['id']->getType()->getWrappedType() instanceof IDType)) {
+            if (!isset($fields[SchemaModel::PRIMARY_KEY]) ||
+                !($fields[SchemaModel::PRIMARY_KEY]->getType() instanceof NonNull) ||
+                !($fields[SchemaModel::PRIMARY_KEY]->getType()->getWrappedType() instanceof IDType)) {
                 throw new Error('Root types must define id field');
             }
         }

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use Kinko\Models\Application;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class GraphQLTests extends TestCase
@@ -48,9 +49,10 @@ class GraphQLTests extends TestCase
 
         $name = $this->faker->name;
         $email = $this->faker->email;
-        $created_at = time();
+        $now = now();
+        Carbon::setTestNow($now);
 
-        $response = $this->graphql("mutation {createUser(name: \"$name\", email: \"$email\", created_at: $created_at) {id, name, email, created_at}}");
+        $response = $this->graphql("mutation {createUser(name: \"$name\", email: \"$email\") {id, name, email, created_at, updated_at}}");
 
         $response->assertSuccessful();
         $response->assertJsonStructure(['data' => ['createUser' => ['id', 'name', 'email', 'created_at']]]);
@@ -58,7 +60,8 @@ class GraphQLTests extends TestCase
         $this->assertEquals(1, DB::collection('store-users')->count());
         $this->assertEquals($name, $response->json('data.createUser.name'));
         $this->assertEquals($email, $response->json('data.createUser.email'));
-        $this->assertEquals($created_at, $response->json('data.createUser.created_at'));
+        $this->assertEquals($now->getTimestamp(), $response->json('data.createUser.created_at'));
+        $this->assertEquals($now->getTImestamp(), $response->json('data.createUser.updated_at'));
     }
 
     private function graphql($query)

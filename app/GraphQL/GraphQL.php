@@ -20,8 +20,8 @@ class GraphQL
         $ast = Parser::parse($source);
 
         if ($validate) {
-            $builder = new SchemaBuilder($ast);
-            $builder->build(true);
+            $schema = new Schema($ast);
+            $schema->validate();
         }
 
         return AST::toArray($ast);
@@ -29,25 +29,25 @@ class GraphQL
 
     public function parseJsonSchema($source, $validate = false)
     {
-        $schema = json_decode($source, true);
+        $schemaDefinition = json_decode($source, true);
 
         if ($validate) {
-            $ast = AST::fromArray($schema);
+            $ast = AST::fromArray($schemaDefinition);
 
-            $builder = new SchemaBuilder($ast);
-            $builder->build(true);
+            $schema = new Schema($ast);
+            $schema->validate();
         }
 
-        return $schema;
+        return $schemaDefinition;
     }
 
     public function query(Application $application, ServerRequestInterface $request)
     {
         $ast = AST::fromArray($application->schema);
         $db = App::make(GraphQLDatabaseBridge::class);
-        $builder = new SchemaBuilder($ast, $db);
+        $schema = new Schema($ast, $db);
         $server = new StandardServer([
-            'schema' => $builder->build(),
+            'schema' => $schema->build(),
             'rootValue' => [],
         ]);
         $response = App::make(ResponseInterface::class);
