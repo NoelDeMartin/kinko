@@ -52,7 +52,20 @@ class GraphQLTests extends TestCase
         $now = now();
         Carbon::setTestNow($now);
 
-        $response = $this->graphql("mutation {createUser(name: \"$name\", email: \"$email\") {id, name, email, created_at, updated_at}}");
+        $response = $this->graphql(
+            "mutation {
+                createUser(
+                    name: \"$name\",
+                    email: \"$email\"
+                ) {
+                    id,
+                    name,
+                    email,
+                    created_at,
+                    updated_at
+                }
+            }"
+        );
 
         $response->assertSuccessful();
         $response->assertJsonStructure(['data' => ['createUser' => ['id', 'name', 'email', 'created_at']]]);
@@ -62,6 +75,34 @@ class GraphQLTests extends TestCase
         $this->assertEquals($email, $response->json('data.createUser.email'));
         $this->assertEquals($now->getTimestamp(), $response->json('data.createUser.created_at'));
         $this->assertEquals($now->getTImestamp(), $response->json('data.createUser.updated_at'));
+    }
+
+    public function test_mutation_primary_key_protected()
+    {
+        factory(Application::class)->create([
+            'schema' => load_stub('schema.json'),
+        ]);
+
+        $id = str_random();
+        $name = $this->faker->name;
+        $email = $this->faker->email;
+        $created_at = time();
+
+        $response = $this->graphql("mutation {
+            createUser(
+                id: \"$id\",
+                name: \"$name\",
+                email: \"$email\",
+                created_at: $created_at
+            ) {
+                id,
+                name,
+                email,
+                created_at
+            }
+        }");
+
+        $response->assertGraphQLError('Unknown argument "id" on field "createUser" of type "Mutation".');
     }
 
     private function graphql($query)
