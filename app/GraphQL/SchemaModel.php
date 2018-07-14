@@ -23,12 +23,49 @@ class SchemaModel
         $this->type = $type;
     }
 
+    public function getName()
+    {
+        return $this->type->name;
+    }
+
+    public function getPluralName()
+    {
+        return str_plural($this->getName());
+    }
+
+    public function getPrimaryKeyName()
+    {
+        return static::PRIMARY_KEY;
+    }
+
+    public function getFieldNames($typeName = null)
+    {
+        $fields = [];
+
+        foreach ($this->type->astNode->fields as $field) {
+            if (is_null($typeName)) {
+                $fields[] = $field->name->value;
+            } else {
+                $type = $field->type;
+
+                if ($type->kind === NodeKind::NON_NULL_TYPE) {
+                    $type = $type->type;
+                }
+
+                if ($type->name->value === $typeName) {
+                    $fields[] = $field->name->value;
+                }
+            }
+        }
+
+        return $fields;
+    }
+
     public function buildQueries(&$queries)
     {
-        $singular = $this->type->name;
-        $plural = str_plural($singular);
+        $pluralName = $this->getPluralName();
 
-        $queries['all' . $plural] = [
+        $queries['all' . $pluralName] = [
             'type' => Type::nonNull(Type::listOf(Type::nonNull($this->type))),
             'args' => [
                 // TODO declare filters
@@ -36,7 +73,7 @@ class SchemaModel
             'resolve' => function ($root, $args) {
                 // TODO apply filters
                 return $this->query()->get()->map(function($result) {
-                    return $this->schema->getDatabaseBridge()->convertResult($result);
+                    return $this->schema->getDatabaseBridge()->convertResult($this, $result);
                 });
             },
         ];
@@ -44,12 +81,11 @@ class SchemaModel
 
     public function buildMutations(&$mutations)
     {
-        $singular = $this->type->name;
-        $plural = str_plural($singular);
+        $name = $this->getName();
 
-        $mutations['create' . $singular] = [
+        $mutations['create' . $name] = [
             'type' => Type::nonNull($this->type),
-            'args' => $this->buildTypeConstructorArguments($this->type),
+            'args' => $this->buildConstructorArguments(),
             'resolve' => function ($root, $args) {
                 if ($this->isAuto(static::CREATED_AT)) {
                     $args[static::CREATED_AT] = now();
@@ -59,7 +95,9 @@ class SchemaModel
                     $args[static::UPDATED_AT] = now();
                 }
 
-                $args[static::PRIMARY_KEY] = $this->query()->insertGetId($args);
+                $data = $this->schema->getDatabaseBridge()->prepareValues($this, $args);
+
+                $args[static::PRIMARY_KEY] = $this->query()->insertGetId($data);
 
                 return $args;
             },
@@ -71,11 +109,11 @@ class SchemaModel
         return in_array($field, $this->autoFields);
     }
 
-    private function buildTypeConstructorArguments($type)
+    private function buildConstructorArguments()
     {
         $arguments = [];
 
-        foreach ($type->astNode->fields as $field) {
+        foreach ($this->type->astNode->fields as $field) {
             if ($field->name->value === static::PRIMARY_KEY) {
                 continue;
             }
@@ -108,6 +146,6 @@ class SchemaModel
 
     private function query()
     {
-        return $this->schema->getDatabaseBridge()->query($this->type);
+        return $this->schema->getDatabaseBridge()->query($this);
     }
 }

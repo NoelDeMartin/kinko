@@ -108,7 +108,7 @@ class Schema
     private function buildCustomScalarTypes()
     {
         return [
-            'Date' => new DateType,
+            DateType::NAME => new DateType,
         ];
     }
 

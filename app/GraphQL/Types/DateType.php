@@ -11,6 +11,8 @@ use GraphQL\Language\AST\StringValueNode;
 
 class DateType extends ScalarType
 {
+    const NAME = 'Date';
+
     public function serialize($value)
     {
         if (!($value instanceof DateTime)) {

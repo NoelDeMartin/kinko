@@ -22,18 +22,20 @@ interface NamedType {
 type Type = NonNullType | NamedType;
 
 export interface Schema {
-    definitions: Array<{
-        name: NameNode,
-        fields: Array<{
-            name: NameNode,
-            type: Type,
-        }>,
-    }>;
+    definitions: SchemaModel[];
 }
 
-export interface SchemaField {
-    type: string;
-    required: boolean;
+export interface SchemaModel {
+    name: NameNode;
+    fields: SchemaModelField[];
+}
+
+export interface SchemaModelField {
+    name: NameNode;
+    type: Type;
+    directives: Array<{
+        name: NameNode,
+    }>;
 }
 
 export default class Application {

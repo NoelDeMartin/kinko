@@ -96,7 +96,7 @@ class ApplicationTests extends TestCase
         $this->assertEquals($client->id, $application->client_id);
 
         $this->assertEquals($name, $client->name);
-        $this->assertEquals($callbackUrl, $client->redirect);
+        $this->assertEquals($redirectUrl, $client->redirect);
         $this->assertEquals($user->id, $client->user_id);
         $this->assertFalse($client->personal_access_client);
         $this->assertFalse($client->password_client);

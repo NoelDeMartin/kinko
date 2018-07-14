@@ -30,7 +30,7 @@ class ApplicationsController extends Controller
             'user_id' => Auth::id(),
             'name' => $request->input('name'),
             'secret' => str_random(40),
-            'redirect' => $request->input('callback_url'),
+            'redirect' => $request->input('redirect_url'),
             'personal_access_client' => false,
             'password_client' => false,
             'revoked' => false,

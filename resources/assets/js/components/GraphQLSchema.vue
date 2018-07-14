@@ -9,11 +9,14 @@
             <tbody>
                 <tr v-for="field of definition.fields" :key="field.name.value">
                     <td>{{ field.name.value }}</td>
-                    <td v-if="field.type.kind === 'NonNullType'">
-                        {{ field.type.type.name.value }} <span>required</span>
-                    </td>
-                    <td v-else>
-                        {{ field.type.name.value }}
+                    <td>
+                        <template v-if="field.type.kind === 'NonNullType'">
+                            {{ field.type.type.name.value }} <span>required</span>
+                        </template>
+                        <template v-else>
+                            {{ field.type.name.value }}
+                        </template>
+                        <span v-if="isAuto(field)">auto</span>
                     </td>
                 </tr>
             </tbody>
@@ -24,11 +27,24 @@
 <script lang="ts">
 import Vue from 'vue';
 
+import { SchemaModelField } from '@/models/Application';
+
 export default Vue.extend({
     props: {
         schema: {
             type: Object,
             required: true,
+        },
+    },
+    methods: {
+        isAuto(field: SchemaModelField) {
+            for (let directive of field.directives) {
+                if (directive.name.value === 'auto') {
+                    return true;
+                }
+            }
+
+            return false;
         },
     },
 });
