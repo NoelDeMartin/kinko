@@ -1,8 +1,7 @@
-type User {
+type Task {
     id: ID!
     name: String!
-    email: String!
-    age: Int
     created_at: Date! @auto
     updated_at: Date! @auto
+    completed_at: Date
 }

@@ -21,7 +21,7 @@ class GraphQLTests extends TestCase
         $response->assertJsonStructure(['data' => ['__schema' => ['types' => []]]]);
 
         $names = collect($response->json('data.__schema.types'))->map->name;
-        $this->assertContains('User', $names);
+        $this->assertContains('Task', $names);
     }
 
     public function test_query()
@@ -30,15 +30,15 @@ class GraphQLTests extends TestCase
             'schema' => load_stub('schema.json'),
         ]);
 
-        $usersCount = random_int(5, 10);
-        $this->createUsers($usersCount);
+        $tasksCount = random_int(5, 10);
+        $this->createTasks($tasksCount);
 
-        $response = $this->graphql('{allUsers{id}}');
+        $response = $this->graphql('{allTasks{id}}');
 
         $response->assertSuccessful();
-        $response->assertJsonStructure(['data' => ['allUsers']]);
+        $response->assertJsonStructure(['data' => ['allTasks']]);
 
-        $this->assertCount($usersCount, $response->json('data.allUsers'));
+        $this->assertCount($tasksCount, $response->json('data.allTasks'));
     }
 
     public function test_mutation()
@@ -47,20 +47,17 @@ class GraphQLTests extends TestCase
             'schema' => load_stub('schema.json'),
         ]);
 
-        $name = $this->faker->name;
-        $email = $this->faker->email;
+        $name = $this->faker->sentence;
         $now = now();
         Carbon::setTestNow($now);
 
         $response = $this->graphql(
             "mutation {
-                createUser(
+                createTask(
                     name: \"$name\",
-                    email: \"$email\"
                 ) {
                     id,
                     name,
-                    email,
                     created_at,
                     updated_at
                 }
@@ -68,13 +65,12 @@ class GraphQLTests extends TestCase
         );
 
         $response->assertSuccessful();
-        $response->assertJsonStructure(['data' => ['createUser' => ['id', 'name', 'email', 'created_at']]]);
+        $response->assertJsonStructure(['data' => ['createTask' => ['id', 'name', 'created_at', 'updated_at']]]);
 
-        $this->assertEquals(1, DB::collection('store-users')->count());
-        $this->assertEquals($name, $response->json('data.createUser.name'));
-        $this->assertEquals($email, $response->json('data.createUser.email'));
-        $this->assertEquals($now->getTimestamp(), $response->json('data.createUser.created_at'));
-        $this->assertEquals($now->getTImestamp(), $response->json('data.createUser.updated_at'));
+        $this->assertEquals(1, DB::collection('store-tasks')->count());
+        $this->assertEquals($name, $response->json('data.createTask.name'));
+        $this->assertEquals($now->getTimestamp(), $response->json('data.createTask.created_at'));
+        $this->assertEquals($now->getTImestamp(), $response->json('data.createTask.updated_at'));
     }
 
     public function test_mutation_primary_key_protected()
@@ -84,25 +80,19 @@ class GraphQLTests extends TestCase
         ]);
 
         $id = str_random();
-        $name = $this->faker->name;
-        $email = $this->faker->email;
-        $created_at = time();
+        $name = $this->faker->sentence;
 
         $response = $this->graphql("mutation {
-            createUser(
+            createTask(
                 id: \"$id\",
                 name: \"$name\",
-                email: \"$email\",
-                created_at: $created_at
             ) {
                 id,
                 name,
-                email,
-                created_at
             }
         }");
 
-        $response->assertGraphQLError('Unknown argument "id" on field "createUser" of type "Mutation".');
+        $response->assertGraphQLError('Unknown argument "id" on field "createTask" of type "Mutation".');
     }
 
     private function graphql($query)
@@ -110,12 +100,11 @@ class GraphQLTests extends TestCase
         return $this->post('/store', compact('query'));
     }
 
-    private function createUsers($count = 1, $attributes = [])
+    private function createTasks($count = 1, $attributes = [])
     {
         for ($i = 0; $i < $count; $i++) {
-            DB::collection('store-users')->insert(array_merge([
-                'name' => $this->faker->name,
-                'email' => $this->faker->email,
+            DB::collection('store-tasks')->insert(array_merge([
+                'name' => $this->faker->sentence,
             ], $attributes));
         }
     }
