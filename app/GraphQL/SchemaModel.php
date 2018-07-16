@@ -2,8 +2,11 @@
 
 namespace Kinko\GraphQL;
 
+use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
+use Kinko\GraphQL\Types\DateType;
 use GraphQL\Language\AST\NodeKind;
+use Illuminate\Support\Facades\Auth;
 use GraphQL\Type\Definition\ObjectType;
 
 class SchemaModel
@@ -87,12 +90,16 @@ class SchemaModel
             'type' => Type::nonNull($this->type),
             'args' => $this->buildConstructorArguments(),
             'resolve' => function ($root, $args) {
-                if ($this->isAuto(static::CREATED_AT)) {
-                    $args[static::CREATED_AT] = now();
-                }
+                foreach ($this->autoFields as $field => $value) {
+                    if ($field === static::CREATED_AT || $field === static::UPDATED_AT) {
+                        $args[$field] = now();
+                    } else if ($value === 'auth.id') {
+                        if (Auth::guest()) {
+                            throw new Error("Can't autofill $field without authentication.");
+                        }
 
-                if ($this->isAuto(static::UPDATED_AT)) {
-                    $args[static::UPDATED_AT] = now();
+                        $args[$field] = Auth::id();
+                    }
                 }
 
                 $data = $this->schema->getDatabaseBridge()->prepareValues($this, $args);
@@ -104,11 +111,6 @@ class SchemaModel
         ];
     }
 
-    private function isAuto($field)
-    {
-        return in_array($field, $this->autoFields);
-    }
-
     private function buildConstructorArguments()
     {
         $arguments = [];
@@ -116,6 +118,17 @@ class SchemaModel
         foreach ($this->type->astNode->fields as $field) {
             if ($field->name->value === static::PRIMARY_KEY) {
                 continue;
+            }
+
+            if (count($field->directives) > 0) {
+                // TODO define directive on schema
+                // TODO decouple functionality (this method may be called more than once)
+                foreach ($field->directives as $directive) {
+                    if ($directive->name->value === 'auto') {
+                        $this->defineAutoField($field, $directive);
+                        continue 2;
+                    }
+                }
             }
 
             $required = false;
@@ -126,22 +139,36 @@ class SchemaModel
                 $type = $type->type;
             }
 
-            if (count($field->directives) > 0) {
-                // TODO define directive on schema
-                foreach ($field->directives as $directive) {
-                    if ($directive->name->value === 'auto') {
-                        $this->autoFields[] = $field->name->value;
-                        continue 2;
-                    }
-                }
-            }
-
             $typeName = $type->name->value;
             $type = $this->schema->getType($typeName);
             $arguments[$field->name->value] = $required ? Type::nonNull($type) : $type;
         }
 
         return $arguments;
+    }
+
+    private function defineAutoField($field, $directive)
+    {
+        $fieldName = $field->name->value;
+
+        if ($fieldName === static::CREATED_AT || $fieldName === static::UPDATED_AT) {
+            if ($field->type->kind !== NodeKind::NON_NULL_TYPE || $field->type->type->name->value !== DateType::NAME) {
+                throw new Error("Field $fieldName with @auto directive must be of type non-null Date");
+            }
+
+            $this->autoFields[$fieldName] = true;
+        } else {
+            if (count($directive->arguments) !== 1 || $directive->arguments[0]->name->value !== 'value') {
+                throw new Error("@auto directive format used for field $fieldName is not valid");
+            }
+
+            // TODO generalize
+            if ($directive->arguments[0]->value->value !== 'auth.id') {
+                throw new Error("@auto directive format used for field $fieldName is not valid");
+            }
+
+            $this->autoFields[$fieldName] = $directive->arguments[0]->value->value;
+        }
     }
 
     private function query()
