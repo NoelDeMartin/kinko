@@ -26,7 +26,7 @@ class DateType extends ScalarType
     {
         if ($value instanceof DateTime) {
             return $value;
-        } else if (is_number($value)) {
+        } else if (is_numeric($value)) {
             return Carbon::createFromTimestamp($value);
         } else if (is_string($value) && $value === 'now') {
             return Carbon::now();

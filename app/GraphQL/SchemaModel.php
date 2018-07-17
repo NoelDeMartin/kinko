@@ -17,13 +17,29 @@ class SchemaModel
 
     protected $schema;
     protected $type;
-
-    protected $autoFields = [];
+    protected $autoFields;
 
     public function __construct(Schema $schema, ObjectType $type)
     {
         $this->schema = $schema;
         $this->type = $type;
+
+        $this->autoFields = [];
+        foreach ($this->type->astNode->fields as $field) {
+            if ($field->name->value === static::PRIMARY_KEY) {
+                continue;
+            }
+
+            if (count($field->directives) > 0) {
+                // TODO define directive on schema
+                foreach ($field->directives as $directive) {
+                    if ($directive->name->value === 'auto') {
+                        $this->defineAutoField($field, $directive);
+                        continue 2;
+                    }
+                }
+            }
+        }
     }
 
     public function getName()
@@ -75,9 +91,7 @@ class SchemaModel
             ],
             'resolve' => function ($root, $args) {
                 // TODO apply filters
-                return $this->query()->get()->map(function($result) {
-                    return $this->schema->getDatabaseBridge()->convertResult($this, $result);
-                });
+                return $this->schema->getDatabaseBridge()->retrieve($this);
             },
         ];
     }
@@ -88,7 +102,7 @@ class SchemaModel
 
         $mutations['create' . $name] = [
             'type' => Type::nonNull($this->type),
-            'args' => $this->buildConstructorArguments(),
+            'args' => $this->buildTypeArguments(),
             'resolve' => function ($root, $args) {
                 foreach ($this->autoFields as $field => $value) {
                     if ($field === static::CREATED_AT || $field === static::UPDATED_AT) {
@@ -102,33 +116,42 @@ class SchemaModel
                     }
                 }
 
-                $data = $this->schema->getDatabaseBridge()->prepareValues($this, $args);
+                return $this->schema->getDatabaseBridge()->create($this, $args);
+            },
+        ];
 
-                $args[static::PRIMARY_KEY] = $this->query()->insertGetId($data);
+        $mutations['update' . $name] = [
+            'type' => Type::nonNull($this->type),
+            'args' => array_merge($this->buildTypeArguments(false), [
+                static::PRIMARY_KEY => Type::nonNull($this->schema->getType(Type::ID)),
+            ]),
+            'resolve' => function ($root, $args) {
+                $id = $args[static::PRIMARY_KEY];
+                unset($args[static::PRIMARY_KEY]);
 
-                return $args;
+                if ($this->isAuto(static::UPDATED_AT)) {
+                    $args[static::UPDATED_AT] = now();
+                }
+
+                return $this->schema->getDatabaseBridge()->update($this, $id, $args);
             },
         ];
     }
 
-    private function buildConstructorArguments()
+    private function isAuto($field)
+    {
+        return isset($this->autoFields[$field]);
+    }
+
+    private function buildTypeArguments($maintainRequired = true)
     {
         $arguments = [];
 
         foreach ($this->type->astNode->fields as $field) {
-            if ($field->name->value === static::PRIMARY_KEY) {
-                continue;
-            }
+            $fieldName = $field->name->value;
 
-            if (count($field->directives) > 0) {
-                // TODO define directive on schema
-                // TODO decouple functionality (this method may be called more than once)
-                foreach ($field->directives as $directive) {
-                    if ($directive->name->value === 'auto') {
-                        $this->defineAutoField($field, $directive);
-                        continue 2;
-                    }
-                }
+            if ($fieldName === static::PRIMARY_KEY || $this->isAuto($fieldName)) {
+                continue;
             }
 
             $required = false;
@@ -141,7 +164,7 @@ class SchemaModel
 
             $typeName = $type->name->value;
             $type = $this->schema->getType($typeName);
-            $arguments[$field->name->value] = $required ? Type::nonNull($type) : $type;
+            $arguments[$fieldName] = ($required && $maintainRequired) ? Type::nonNull($type) : $type;
         }
 
         return $arguments;
@@ -169,10 +192,5 @@ class SchemaModel
 
             $this->autoFields[$fieldName] = $directive->arguments[0]->value->value;
         }
-    }
-
-    private function query()
-    {
-        return $this->schema->getDatabaseBridge()->query($this);
     }
 }

@@ -5,29 +5,29 @@ namespace Kinko\GraphQL;
 interface GraphQLDatabaseBridge
 {
     /**
-     * Create new query for given type.
+     * Create new model.
      *
      * @param \Kinko\GraphQL\SchemaModel $model
-     * @param \GraphQL\Type\Definition\Type $type
-     * @return \Illuminate\Database\Query\Builder
-     */
-    public function query(SchemaModel $model);
-
-    /**
-     * Prepare values to be inserted in the database.
-     *
-     * @param \Kinko\GraphQL\SchemaModel $model
-     * @param mixed $values
+     * @param mixed $args
      * @return mixed
      */
-    public function prepareValues(SchemaModel $model, $values);
+    public function create(SchemaModel $model, $args);
 
     /**
-     * Convert database result into supported GraphQL Schema types.
+     * Retrieve models.
      *
      * @param \Kinko\GraphQL\SchemaModel $model
-     * @param mixed $result
+     * @return array
+     */
+    public function retrieve(SchemaModel $model);
+
+    /**
+     * Update model.
+     *
+     * @param \Kinko\GraphQL\SchemaModel $model
+     * @param mixed $id
+     * @param mixed $args
      * @return mixed
      */
-    public function convertResult(SchemaModel $model, $result);
+    public function update(SchemaModel $model, $id, $args);
 }

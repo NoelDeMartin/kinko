@@ -11,13 +11,48 @@ use Kinko\GraphQL\GraphQLDatabaseBridge;
 
 class Bridge implements GraphQLDatabaseBridge
 {
-    public function query(SchemaModel $model)
+    public function create(SchemaModel $model, $args)
     {
-        $collection = 'store-' . strtolower($model->getPluralName());
-        return DB::collection($collection);
+        $id = $this->query($model)->insertGetId($this->prepareValues($model, $args));
+
+        $args[$model->getPrimaryKeyName()] = $id;
+
+        return $args;
     }
 
-    public function prepareValues(SchemaModel $model, $values)
+    public function retrieve(SchemaModel $model)
+    {
+        return $this->query($model)->get()->map(function ($result) use ($model) {
+            return $this->convertResult($model, $result);
+        });
+    }
+
+    public function update(SchemaModel $model, $id, $args)
+    {
+        $updated = [];
+        $removed = [];
+
+        foreach ($this->prepareValues($model, $args) as $key => $value) {
+            if (is_null($value)) {
+                $removed[$key] = true;
+            } else {
+                $updated[$key] = $value;
+            }
+        }
+
+        if (!empty($updated)) {
+            $this->query($model)->where('_id', MongoDB::key($id))->update($updated);
+        }
+        if (!empty($removed)) {
+            $this->query($model)->where('_id', MongoDB::key($id))->update(['$unset' => $removed]);
+        }
+
+        $result = $this->query($model)->where('_id', MongoDB::key($id))->first();
+
+        return $this->convertResult($model, $result);
+    }
+
+    private function prepareValues(SchemaModel $model, $values)
     {
         foreach ($model->getFieldNames(Type::ID) as $field) {
             if (isset($values[$field])) {
@@ -34,7 +69,7 @@ class Bridge implements GraphQLDatabaseBridge
         return $values;
     }
 
-    public function convertResult(SchemaModel $model, $document)
+    private function convertResult(SchemaModel $model, $document)
     {
         $document = MongoDB::convertDocument($document);
 
@@ -44,5 +79,11 @@ class Bridge implements GraphQLDatabaseBridge
         }
 
         return $document;
+    }
+
+    private function query(SchemaModel $model)
+    {
+        $collection = 'store-' . strtolower($model->getPluralName());
+        return DB::collection($collection);
     }
 }

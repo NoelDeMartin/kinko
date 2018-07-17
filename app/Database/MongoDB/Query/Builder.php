@@ -135,7 +135,16 @@ class Builder extends NonRelationalBuilder
 
     public function update(array $values)
     {
-        // TODO
+        if (!starts_with(key($values), '$')) {
+            $values = ['$set' => $values];
+        }
+
+        $result = $this->getCollection()->updateMany(
+            $this->buildWheresMatch(),
+            $values
+        );
+
+        return $result->getModifiedCount();
     }
 
     public function insert(array $values)
