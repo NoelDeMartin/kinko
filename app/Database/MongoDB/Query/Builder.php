@@ -133,15 +133,23 @@ class Builder extends NonRelationalBuilder
         return count($results) > 0 ? $results[0]['count'] : 0;
     }
 
-    public function update(array $values)
+    public function update(array $updated, array $removed = [])
     {
-        if (!starts_with(key($values), '$')) {
-            $values = ['$set' => $values];
+        $operations = [
+            '$set' => $updated,
+        ];
+
+        if (!empty($removed)) {
+            $operations['$unset'] = [];
+
+            foreach ($removed as $field) {
+                $operations['$unset'][$field] = true;
+            }
         }
 
         $result = $this->getCollection()->updateMany(
             $this->buildWheresMatch(),
-            $values
+            $operations
         );
 
         return $result->getModifiedCount();

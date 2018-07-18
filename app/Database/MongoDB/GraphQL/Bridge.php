@@ -29,22 +29,19 @@ class Bridge implements GraphQLDatabaseBridge
 
     public function update(SchemaModel $model, $id, $args)
     {
-        $updated = [];
-        $removed = [];
+        if (!empty($args)) {
+            $updated = [];
+            $removed = [];
 
-        foreach ($this->prepareValues($model, $args) as $key => $value) {
-            if (is_null($value)) {
-                $removed[$key] = true;
-            } else {
-                $updated[$key] = $value;
+            foreach ($this->prepareValues($model, $args) as $key => $value) {
+                if (is_null($value)) {
+                    $removed[] = $key;
+                } else {
+                    $updated[$key] = $value;
+                }
             }
-        }
 
-        if (!empty($updated)) {
-            $this->query($model)->where('_id', MongoDB::key($id))->update($updated);
-        }
-        if (!empty($removed)) {
-            $this->query($model)->where('_id', MongoDB::key($id))->update(['$unset' => $removed]);
+            $this->query($model)->where('_id', MongoDB::key($id))->update($updated, $removed);
         }
 
         $result = $this->query($model)->where('_id', MongoDB::key($id))->first();
