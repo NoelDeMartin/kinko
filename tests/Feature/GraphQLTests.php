@@ -133,6 +133,35 @@ class GraphQLTests extends TestCase
         $this->assertArrayHasKey('updated_at', $document);
     }
 
+    public function test_mutation_delete()
+    {
+        factory(Application::class)->create([
+            'schema' => load_stub('schema.json'),
+        ]);
+
+        $user = factory(User::class)->create();
+        $name = $this->faker->sentence;
+        $now = now();
+        $id = DB::collection('store-tasks')->insertGetId([
+            'name' => $this->faker->sentence,
+            'description' => $this->faker->sentence,
+            'created_at' => MongoDB::date($now),
+            'updated_at' => MongoDB::date($now),
+        ]);
+
+        $response = $this->login($user)->graphql(
+            "mutation {
+                deleteTask(id: \"$id\")
+            }"
+        );
+
+        $response->assertSuccessful();
+        $response->assertJsonStructure(['data' => ['deleteTask']]);
+
+        $this->assertEquals(0, DB::collection('store-tasks')->count());
+        $this->assertTrue($response->json('data.deleteTask'));
+    }
+
     public function test_mutation_primary_key_protected()
     {
         factory(Application::class)->create([

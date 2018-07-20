@@ -30,4 +30,12 @@ interface GraphQLDatabaseBridge
      * @return mixed
      */
     public function update(SchemaModel $model, $id, $args);
+
+    /**
+     * Delete model.
+     *
+     * @param \Kinko\GraphQL\SchemaModel $model
+     * @param mixed $id
+     */
+    public function delete(SchemaModel $model, $id);
 }

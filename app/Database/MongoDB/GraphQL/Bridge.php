@@ -49,6 +49,11 @@ class Bridge implements GraphQLDatabaseBridge
         return $this->convertResult($model, $result);
     }
 
+    public function delete(SchemaModel $model, $id)
+    {
+        $this->query($model)->where('_id', MongoDB::key($id))->delete();
+    }
+
     private function prepareValues(SchemaModel $model, $values)
     {
         foreach ($model->getFieldNames(Type::ID) as $field) {

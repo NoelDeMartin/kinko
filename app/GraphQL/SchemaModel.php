@@ -123,7 +123,7 @@ class SchemaModel
         $mutations['update' . $name] = [
             'type' => Type::nonNull($this->type),
             'args' => array_merge($this->buildTypeArguments(false), [
-                static::PRIMARY_KEY => Type::nonNull($this->schema->getType(Type::ID)),
+                static::PRIMARY_KEY => Type::nonNull(Type::id()),
             ]),
             'resolve' => function ($root, $args) {
                 $id = $args[static::PRIMARY_KEY];
@@ -134,6 +134,18 @@ class SchemaModel
                 }
 
                 return $this->schema->getDatabaseBridge()->update($this, $id, $args);
+            },
+        ];
+
+        $mutations['delete' . $name] = [
+            'type' => Type::boolean(),
+            'args' => [
+                static::PRIMARY_KEY => Type::nonNull(Type::id()),
+            ],
+            'resolve' => function ($root, $args) {
+                $this->schema->getDatabaseBridge()->delete($this, $args[static::PRIMARY_KEY]);
+
+                return true;
             },
         ];
     }
