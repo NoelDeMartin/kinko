@@ -35,12 +35,12 @@ class GraphQLTests extends TestCase
         $tasksCount = random_int(5, 10);
         $this->createTasks($tasksCount);
 
-        $response = $this->login()->graphql('{allTasks{id}}');
+        $response = $this->login()->graphql('{tasks: getTasks{id}}');
 
         $response->assertSuccessful();
-        $response->assertJsonStructure(['data' => ['allTasks']]);
+        $response->assertJsonStructure(['data' => ['tasks']]);
 
-        $this->assertCount($tasksCount, $response->json('data.allTasks'));
+        $this->assertCount($tasksCount, $response->json('data.tasks'));
     }
 
     public function test_mutation_create()
@@ -57,7 +57,7 @@ class GraphQLTests extends TestCase
 
         $response = $this->login($user)->graphql(
             "mutation {
-                createTask(
+                task: createTask(
                     name: \"$name\",
                     description: \"$description\",
                 ) {
@@ -72,14 +72,14 @@ class GraphQLTests extends TestCase
         );
 
         $response->assertSuccessful();
-        $response->assertJsonStructure(['data' => ['createTask' => ['id', 'name', 'description', 'author_id', 'created_at', 'updated_at']]]);
+        $response->assertJsonStructure(['data' => ['task' => ['id', 'name', 'description', 'author_id', 'created_at', 'updated_at']]]);
 
         $this->assertEquals(1, DB::collection('store-tasks')->count());
-        $this->assertEquals($name, $response->json('data.createTask.name'));
-        $this->assertEquals($description, $response->json('data.createTask.description'));
-        $this->assertEquals($user->id, $response->json('data.createTask.author_id'));
-        $this->assertEquals($now->getTimestamp(), $response->json('data.createTask.created_at'));
-        $this->assertEquals($now->getTImestamp(), $response->json('data.createTask.updated_at'));
+        $this->assertEquals($name, $response->json('data.task.name'));
+        $this->assertEquals($description, $response->json('data.task.description'));
+        $this->assertEquals($user->id, $response->json('data.task.author_id'));
+        $this->assertEquals($now->getTimestamp(), $response->json('data.task.created_at'));
+        $this->assertEquals($now->getTImestamp(), $response->json('data.task.updated_at'));
     }
 
     public function test_mutation_update()
@@ -103,7 +103,7 @@ class GraphQLTests extends TestCase
 
         $response = $this->login($user)->graphql(
             "mutation {
-                updateTask(
+                task: updateTask(
                     id: \"$id\",
                     name: \"$name\",
                     description: null,
@@ -118,13 +118,13 @@ class GraphQLTests extends TestCase
         );
 
         $response->assertSuccessful();
-        $response->assertJsonStructure(['data' => ['updateTask' => ['id', 'name', 'description', 'created_at', 'updated_at']]]);
+        $response->assertJsonStructure(['data' => ['task' => ['id', 'name', 'description', 'created_at', 'updated_at']]]);
 
-        $this->assertEquals($id, $response->json('data.updateTask.id'));
-        $this->assertEquals($name, $response->json('data.updateTask.name'));
-        $this->assertNull($response->json('data.updateTask.description'));
-        $this->assertEquals($now->getTimestamp(), $response->json('data.updateTask.created_at'));
-        $this->assertEquals($later->getTimestamp(), $response->json('data.updateTask.updated_at'));
+        $this->assertEquals($id, $response->json('data.task.id'));
+        $this->assertEquals($name, $response->json('data.task.name'));
+        $this->assertNull($response->json('data.task.description'));
+        $this->assertEquals($now->getTimestamp(), $response->json('data.task.created_at'));
+        $this->assertEquals($later->getTimestamp(), $response->json('data.task.updated_at'));
 
         $document = DB::collection('store-tasks')->first();
         $this->assertArrayHasKey('name', $document);
@@ -151,15 +151,15 @@ class GraphQLTests extends TestCase
 
         $response = $this->login($user)->graphql(
             "mutation {
-                deleteTask(id: \"$id\")
+                result: deleteTask(id: \"$id\")
             }"
         );
 
         $response->assertSuccessful();
-        $response->assertJsonStructure(['data' => ['deleteTask']]);
+        $response->assertJsonStructure(['data' => ['result']]);
 
         $this->assertEquals(0, DB::collection('store-tasks')->count());
-        $this->assertTrue($response->json('data.deleteTask'));
+        $this->assertTrue($response->json('data.result'));
     }
 
     public function test_mutation_primary_key_protected()

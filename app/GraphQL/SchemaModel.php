@@ -8,12 +8,16 @@ use Kinko\GraphQL\Types\DateType;
 use GraphQL\Language\AST\NodeKind;
 use Illuminate\Support\Facades\Auth;
 use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\InputObjectType;
 
 class SchemaModel
 {
     const PRIMARY_KEY = 'id';
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
+
+    const TYPE_FILTER = 'Filter';
+    const TYPE_ORDER_BY = 'OrderBy';
 
     protected $schema;
     protected $type;
@@ -80,18 +84,69 @@ class SchemaModel
         return $fields;
     }
 
+    public function buildTypes(&$types)
+    {
+        $types[static::TYPE_FILTER] = new InputObjectType([
+            'name' => 'Filter',
+            'fields' => function() {
+                return [
+                    'AND' => [
+                        'type' => Type::listOf(Type::nonNull($this->schema->getType(static::TYPE_FILTER))),
+                    ],
+                    'OR' => [
+                        'type' => Type::listOf(Type::nonNull($this->schema->getType(static::TYPE_FILTER))),
+                    ],
+                    'field' => [ 'type' => Type::string() ],
+                    'operation' => [ 'type' => Type::string() ], // TODO enum Operation
+                    'value' => [ 'type' => Type::string() ], // TODO any
+                ];
+            },
+        ]);
+
+        $types[static::TYPE_ORDER_BY] = new InputObjectType([
+            'name' => 'OrderBy',
+            'fields' => function () {
+                return [
+                    'AND' => [
+                        'type' => Type::listOf(Type::nonNull($this->schema->getType(static::TYPE_ORDER_BY))),
+                    ],
+                    'field' => [ 'type' => Type::string() ],
+                    'direction' => [ 'type' => Type::string() ], // TODO enum OrderByDirection
+                ];
+            },
+        ]);
+    }
+
     public function buildQueries(&$queries)
     {
+        $name = $this->getName();
         $pluralName = $this->getPluralName();
 
-        $queries['all' . $pluralName] = [
-            'type' => Type::nonNull(Type::listOf(Type::nonNull($this->type))),
+        $queries['get' . $name] = [
+            'type' => $this->type,
             'args' => [
-                // TODO declare filters
+                static::PRIMARY_KEY => Type::id(),
             ],
             'resolve' => function ($root, $args) {
-                // TODO apply filters
-                return $this->schema->getDatabaseBridge()->retrieve($this);
+                $results = $this->schema->getDatabaseBridge()->retrieve($this, [
+                    'filter' => $args,
+                    'limit' => 1,
+                ]);
+
+                return count($results) > 0 ? $results[0] : null;
+            },
+        ];
+
+        $queries['get' . $pluralName] = [
+            'type' => Type::nonNull(Type::listOf(Type::nonNull($this->type))),
+            'args' => [
+                'filter' => $this->schema->getType(static::TYPE_FILTER),
+                'orderBy' => $this->schema->getType(static::TYPE_ORDER_BY),
+                'limit' => Type::int(),
+                'offset' => Type::int(),
+            ],
+            'resolve' => function ($root, $args) {
+                return $this->schema->getDatabaseBridge()->retrieve($this, $args);
             },
         ];
     }

@@ -17,9 +17,10 @@ interface GraphQLDatabaseBridge
      * Retrieve models.
      *
      * @param \Kinko\GraphQL\SchemaModel $model
+     * @param array $restrictions
      * @return array
      */
-    public function retrieve(SchemaModel $model);
+    public function retrieve(SchemaModel $model, array $restrictions);
 
     /**
      * Update model.

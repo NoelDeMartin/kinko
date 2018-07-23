@@ -20,8 +20,10 @@ class Bridge implements GraphQLDatabaseBridge
         return $args;
     }
 
-    public function retrieve(SchemaModel $model)
+    public function retrieve(SchemaModel $model, array $restrictions)
     {
+        // TODO use restrictions
+
         return $this->query($model)->get()->map(function ($result) use ($model) {
             return $this->convertResult($model, $result);
         });

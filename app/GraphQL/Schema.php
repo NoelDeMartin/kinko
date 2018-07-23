@@ -166,6 +166,7 @@ class Schema
     private function buildTypeOperations($type, &$queries, &$mutations)
     {
         $model = new SchemaModel($this, $type);
+        $model->buildTypes($this->types);
         $model->buildQueries($queries);
         $model->buildMutations($mutations);
     }
