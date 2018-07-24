@@ -84,6 +84,23 @@ class SchemaModel
         return $fields;
     }
 
+    public function getFieldTypeName($fieldName)
+    {
+        foreach ($this->type->astNode->fields as $field) {
+            if ($field->name->value === $fieldName) {
+                $type = $field->type;
+
+                if ($type->kind === NodeKind::NON_NULL_TYPE) {
+                    $type = $type->type;
+                }
+
+                return $type->name->value;
+            }
+        }
+
+        return null;
+    }
+
     public function buildTypes(&$types)
     {
         $types[static::TYPE_FILTER] = new InputObjectType([
@@ -129,7 +146,10 @@ class SchemaModel
             ],
             'resolve' => function ($root, $args) {
                 $results = $this->schema->getDatabaseBridge()->retrieve($this, [
-                    'filter' => $args,
+                    'filter' => [
+                        'field' => static::PRIMARY_KEY,
+                        'value' => $args[static::PRIMARY_KEY],
+                    ],
                     'limit' => 1,
                 ]);
 

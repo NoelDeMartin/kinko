@@ -11,9 +11,11 @@ use Kinko\GraphQL\GraphQLDatabaseBridge;
 
 class Bridge implements GraphQLDatabaseBridge
 {
+    // TODO move $model to constructor
+
     public function create(SchemaModel $model, $args)
     {
-        $id = $this->query($model)->insertGetId($this->prepareValues($model, $args));
+        $id = $this->query($model)->insertGetId($this->prepareDatabaseValues($model, $args));
 
         $args[$model->getPrimaryKeyName()] = $id;
 
@@ -22,9 +24,25 @@ class Bridge implements GraphQLDatabaseBridge
 
     public function retrieve(SchemaModel $model, array $restrictions)
     {
-        // TODO use restrictions
+        $query = $this->query($model);
 
-        return $this->query($model)->get()->map(function ($result) use ($model) {
+        if (isset($restrictions['filter'])) {
+            $this->applyFilter($model, $query, $restrictions['filter']);
+        }
+
+        if (isset($restrictions['orderBy'])) {
+            // TODO
+        }
+
+        if (isset($restrictions['limit'])) {
+            $query->limit($restrictions['limit']);
+        }
+
+        if (isset($restrictions['offset'])) {
+            $query->offset($restrictions['offset']);
+        }
+
+        return $query->get()->map(function ($result) use ($model) {
             return $this->convertResult($model, $result);
         });
     }
@@ -35,7 +53,7 @@ class Bridge implements GraphQLDatabaseBridge
             $updated = [];
             $removed = [];
 
-            foreach ($this->prepareValues($model, $args) as $key => $value) {
+            foreach ($this->prepareDatabaseValues($model, $args) as $key => $value) {
                 if (is_null($value)) {
                     $removed[] = $key;
                 } else {
@@ -56,7 +74,36 @@ class Bridge implements GraphQLDatabaseBridge
         $this->query($model)->where('_id', MongoDB::key($id))->delete();
     }
 
-    private function prepareValues(SchemaModel $model, $values)
+    private function query(SchemaModel $model)
+    {
+        $collection = 'store-' . strtolower($model->getPluralName());
+        return DB::collection($collection);
+    }
+
+    private function applyFilter(SchemaModel $model, $query, $filter)
+    {
+        if (isset($filter['AND'])) {
+            // TODO
+        } else if (isset($filter['OR'])) {
+            // TODO
+        } else if (isset($filter['operation'])) {
+            // TODO
+        } else {
+            $query->where(
+                $this->getDatabaseFieldName($model, $filter['field']),
+                $this->prepareDatabaseValue($model, $filter['field'], $filter['value'])
+            );
+        }
+    }
+
+    private function getDatabaseFieldName(SchemaModel $model, $field)
+    {
+        return $field === $model->getPrimaryKeyName()
+            ? '_id'
+            : $field;
+    }
+
+    private function prepareDatabaseValues(SchemaModel $model, $values)
     {
         foreach ($model->getFieldNames(Type::ID) as $field) {
             if (isset($values[$field])) {
@@ -73,6 +120,18 @@ class Bridge implements GraphQLDatabaseBridge
         return $values;
     }
 
+    private function prepareDatabaseValue(SchemaModel $model, $field, $value)
+    {
+        switch ($model->getFieldTypeName($field)) {
+            case Type::ID:
+                return MongoDB::key($value);
+            case DateType::NAME:
+                return MongoDB::date($value);
+            default:
+                return $value;
+        }
+    }
+
     private function convertResult(SchemaModel $model, $document)
     {
         $document = MongoDB::convertDocument($document);
@@ -83,11 +142,5 @@ class Bridge implements GraphQLDatabaseBridge
         }
 
         return $document;
-    }
-
-    private function query(SchemaModel $model)
-    {
-        $collection = 'store-' . strtolower($model->getPluralName());
-        return DB::collection($collection);
     }
 }

@@ -43,6 +43,45 @@ class GraphQLTests extends TestCase
         $this->assertCount($tasksCount, $response->json('data.tasks'));
     }
 
+    public function test_query_find_one()
+    {
+        factory(Application::class)->create([
+            'schema' => load_stub('schema.json'),
+        ]);
+
+        $task = $this->createTasks(random_int(5, 10))->random();
+
+        $response = $this->login()->graphql(
+            "{
+                task: getTask(id: \"{$task->id}\") {
+                    id,
+                    name,
+                    description,
+                    author_id,
+                    created_at,
+                    updated_at
+                }
+            }"
+        );
+
+        $response->assertSuccessful();
+        $response->assertJsonStructure([
+            'data' => [
+                'task' => [
+                    'id',
+                    'name',
+                    'description',
+                    'author_id',
+                    'created_at',
+                    'updated_at'
+                ],
+            ],
+        ]);
+
+
+        $this->assertEquals((string) $task->id, $response->json('data.task.id'));
+    }
+
     public function test_mutation_create()
     {
         factory(Application::class)->create([
@@ -191,10 +230,19 @@ class GraphQLTests extends TestCase
 
     private function createTasks($count = 1, $attributes = [])
     {
+        $tasks = collect();
         for ($i = 0; $i < $count; $i++) {
-            DB::collection('store-tasks')->insert(array_merge([
+            $now = now();
+            $task = array_merge([
                 'name' => $this->faker->sentence,
-            ], $attributes));
+                'author_id' => str_random(),
+                'created_at' => MongoDB::date($now),
+                'updated_at' => MongoDB::date($now),
+            ], $attributes);
+            $task['id'] = DB::collection('store-tasks')->insertGetId($task);
+            $tasks->push((object) $task);
         }
+
+        return $tasks;
     }
 }
