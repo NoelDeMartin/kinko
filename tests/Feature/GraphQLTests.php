@@ -65,21 +65,119 @@ class GraphQLTests extends TestCase
         );
 
         $response->assertSuccessful();
-        $response->assertJsonStructure([
-            'data' => [
-                'task' => [
-                    'id',
-                    'name',
-                    'description',
-                    'author_id',
-                    'created_at',
-                    'updated_at'
-                ],
-            ],
+
+        $this->assertTaskEquals($task, $response->json('data.task'));
+    }
+
+    public function test_query_simple_filter()
+    {
+        factory(Application::class)->create([
+            'schema' => load_stub('schema.json'),
         ]);
 
+        $tasks = $this->createTasks(random_int(5, 10))->random(random_int(2, 4));
 
-        $this->assertEquals((string) $task->id, $response->json('data.task.id'));
+        $name = $this->faker->unique()->sentence;
+        foreach ($tasks as $task) {
+            $task->name = $name;
+            DB::collection('store-tasks')
+                ->where('_id', MongoDB::key($task->id))
+                ->update(compact('name'));
+        }
+
+        $response = $this->login()->graphql(
+            "{
+                tasks: getTasks(filter: {
+                    field: \"name\",
+                    value: \"{$name}\"
+                }) {
+                    id,
+                    name,
+                    description,
+                    author_id,
+                    created_at,
+                    updated_at
+                }
+            }"
+        );
+
+        $response->assertSuccessful();
+
+        $responseTasks = $response->json('data.tasks');
+        $this->assertCount($tasks->count(), $responseTasks);
+
+        foreach ($responseTasks as $i => $task) {
+            $this->assertTaskEquals($tasks[$i], $task);
+        }
+    }
+
+    public function test_query_order_by()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function test_query_limit()
+    {
+        factory(Application::class)->create([
+            'schema' => load_stub('schema.json'),
+        ]);
+
+        $tasks = $this->createTasks(random_int(5, 10));
+        $limit = intval($tasks->count() / 2);
+
+        $response = $this->login()->graphql(
+            "{
+                tasks: getTasks(limit: {$limit}) {
+                    id,
+                    name,
+                    description,
+                    author_id,
+                    created_at,
+                    updated_at
+                }
+            }"
+        );
+
+        $response->assertSuccessful();
+
+        $responseTasks = $response->json('data.tasks');
+        $this->assertCount($limit, $responseTasks);
+
+        foreach ($responseTasks as $i => $task) {
+            $this->assertTaskEquals($tasks[$i], $task);
+        }
+    }
+
+    public function test_query_offset()
+    {
+        factory(Application::class)->create([
+            'schema' => load_stub('schema.json'),
+        ]);
+
+        $tasks = $this->createTasks(random_int(5, 10));
+        $offset = intval($tasks->count() / 2);
+
+        $response = $this->login()->graphql(
+            "{
+                tasks: getTasks(offset: {$offset}) {
+                    id,
+                    name,
+                    description,
+                    author_id,
+                    created_at,
+                    updated_at
+                }
+            }"
+        );
+
+        $response->assertSuccessful();
+
+        $responseTasks = $response->json('data.tasks');
+        $this->assertCount($tasks->count() - $offset, $responseTasks);
+
+        foreach ($responseTasks as $i => $task) {
+            $this->assertTaskEquals($tasks[$i + $offset], $task);
+        }
     }
 
     public function test_mutation_create()
@@ -235,14 +333,27 @@ class GraphQLTests extends TestCase
             $now = now();
             $task = array_merge([
                 'name' => $this->faker->sentence,
+                'description' => $this->faker->sentence,
                 'author_id' => str_random(),
                 'created_at' => MongoDB::date($now),
                 'updated_at' => MongoDB::date($now),
             ], $attributes);
-            $task['id'] = DB::collection('store-tasks')->insertGetId($task);
+            $task['id'] = (string) DB::collection('store-tasks')->insertGetId($task);
+            $task['created_at'] = $task['created_at']->toDateTime();
+            $task['updated_at'] = $task['updated_at']->toDateTime();
             $tasks->push((object) $task);
         }
 
         return $tasks;
+    }
+
+    private function assertTaskEquals($expected, $actual)
+    {
+        $this->assertEquals($expected->id, $actual['id']);
+        $this->assertEquals($expected->name, $actual['name']);
+        $this->assertEquals($expected->description, $actual['description']);
+        $this->assertEquals($expected->author_id, $actual['author_id']);
+        $this->assertEquals($expected->created_at->getTimestamp(), $actual['created_at']);
+        $this->assertEquals($expected->updated_at->getTimestamp(), $actual['updated_at']);
     }
 }

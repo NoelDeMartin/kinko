@@ -219,6 +219,10 @@ class Builder extends NonRelationalBuilder
             $pipeline[] = [ '$limit' => $this->limit ];
         }
 
+        if (!is_null($this->offset)) {
+            $pipeline[] = [ '$skip' => $this->offset ];
+        }
+
         return $pipeline;
     }
 
