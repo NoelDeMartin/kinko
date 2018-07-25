@@ -44,8 +44,8 @@ class GraphQL
     public function query(Application $application, ServerRequestInterface $request)
     {
         $ast = AST::fromArray($application->schema);
-        $db = App::make(GraphQLDatabaseBridge::class);
-        $schema = new Schema($ast, $db);
+        $databaseProvider = App::make(GraphQLDatabaseProvider::class);
+        $schema = new Schema($ast, $databaseProvider);
         $server = new StandardServer([
             'schema' => $schema->build(),
             'rootValue' => [],

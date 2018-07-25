@@ -13,20 +13,24 @@ use GraphQL\Type\Definition\Directive;
 use GraphQL\Utils\ASTDefinitionBuilder;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Schema as GraphQLSchema;
+use GraphQL\Type\Definition\InputObjectType;
 
 class Schema
 {
+    const TYPE_FILTER = 'Filter';
+    const TYPE_ORDER_BY = 'OrderBy';
+
     protected $ast;
-    protected $db;
+    protected $databaseProvider;
 
     protected $types = null;
     protected $customTypes = null;
     protected $customScalarTypes = null;
 
-    public function __construct($ast, $db = null)
+    public function __construct($ast, $databaseProvider = null)
     {
         $this->ast = $ast;
-        $this->db = $db;
+        $this->databaseProvider = $databaseProvider;
     }
 
     public function validate()
@@ -56,9 +60,9 @@ class Schema
         return isset($this->types[$name]) ? $this->types[$name] : null;
     }
 
-    public function getDatabaseBridge()
+    public function getDatabaseProvider()
     {
-        return $this->db;
+        return $this->databaseProvider;
     }
 
     private function parseAST()
@@ -93,7 +97,12 @@ class Schema
 
         $this->customScalarTypes = $this->buildCustomScalarTypes();
         $this->customTypes = $this->buildCustomTypes($typeDefinitions);
-        $this->types = array_merge($this->customScalarTypes, $this->customTypes, Type::getAllBuiltInTypes());
+        $this->types = array_merge(
+            $this->customScalarTypes,
+            $this->customTypes,
+            $this->buildCustomArgumentTypes(),
+            Type::getAllBuiltInTypes()
+        );
 
         $config['typesLoader'] = function ($name) {
             return $this->types[$name];
@@ -109,6 +118,41 @@ class Schema
     {
         return [
             DateType::NAME => new DateType,
+        ];
+    }
+
+    public function buildCustomArgumentTypes()
+    {
+        return [
+            static::TYPE_FILTER => new InputObjectType([
+                'name' => 'Filter',
+                'fields' => function() {
+                    return [
+                        'AND' => [
+                            'type' => Type::listOf(Type::nonNull($this->getType(static::TYPE_FILTER))),
+                        ],
+                        'OR' => [
+                            'type' => Type::listOf(Type::nonNull($this->getType(static::TYPE_FILTER))),
+                        ],
+                        'field' => [ 'type' => Type::string() ],
+                        'operation' => [ 'type' => Type::string() ], // TODO enum Operation
+                        'value' => [ 'type' => Type::string() ], // TODO any
+                    ];
+                },
+            ]),
+
+            static::TYPE_ORDER_BY => new InputObjectType([
+                'name' => 'OrderBy',
+                'fields' => function () {
+                    return [
+                        'AND' => [
+                            'type' => Type::listOf(Type::nonNull($this->getType(static::TYPE_ORDER_BY))),
+                        ],
+                        'field' => [ 'type' => Type::string() ],
+                        'direction' => [ 'type' => Type::string() ], // TODO enum OrderByDirection
+                    ];
+                },
+            ]),
         ];
     }
 
@@ -166,7 +210,6 @@ class Schema
     private function buildTypeOperations($type, &$queries, &$mutations)
     {
         $model = new SchemaModel($this, $type);
-        $model->buildTypes($this->types);
         $model->buildQueries($queries);
         $model->buildMutations($mutations);
     }

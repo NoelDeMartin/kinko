@@ -7,36 +7,32 @@ interface GraphQLDatabaseBridge
     /**
      * Create new model.
      *
-     * @param \Kinko\GraphQL\SchemaModel $model
      * @param mixed $args
      * @return mixed
      */
-    public function create(SchemaModel $model, $args);
+    public function create($args);
 
     /**
      * Retrieve models.
      *
-     * @param \Kinko\GraphQL\SchemaModel $model
      * @param array $restrictions
      * @return array
      */
-    public function retrieve(SchemaModel $model, array $restrictions);
+    public function retrieve(array $restrictions);
 
     /**
      * Update model.
      *
-     * @param \Kinko\GraphQL\SchemaModel $model
      * @param mixed $id
      * @param mixed $args
      * @return mixed
      */
-    public function update(SchemaModel $model, $id, $args);
+    public function update($id, $args);
 
     /**
      * Delete model.
      *
-     * @param \Kinko\GraphQL\SchemaModel $model
      * @param mixed $id
      */
-    public function delete(SchemaModel $model, $id);
+    public function delete($id);
 }

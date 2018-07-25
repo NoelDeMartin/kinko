@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Resources\Json\Resource;
 
 use Kinko\GraphQL\GraphQL;
-use Kinko\GraphQL\GraphQLDatabaseBridge;
-use Kinko\Database\MongoDB\GraphQL\Bridge;
+use Kinko\GraphQL\GraphQLDatabaseProvider;
+use Kinko\Database\MongoDB\GraphQL\Provider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -44,7 +44,7 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton('graphql', GraphQL::class);
-        $this->app->bind(GraphQLDatabaseBridge::class, Bridge::class);
+        $this->app->bind(GraphQLDatabaseProvider::class, Provider::class);
         $this->app->bind(ClientInterface::class, Client::class);
     }
 }

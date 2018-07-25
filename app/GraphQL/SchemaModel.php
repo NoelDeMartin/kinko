@@ -8,7 +8,6 @@ use Kinko\GraphQL\Types\DateType;
 use GraphQL\Language\AST\NodeKind;
 use Illuminate\Support\Facades\Auth;
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\InputObjectType;
 
 class SchemaModel
 {
@@ -16,12 +15,11 @@ class SchemaModel
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    const TYPE_FILTER = 'Filter';
-    const TYPE_ORDER_BY = 'OrderBy';
-
     protected $schema;
     protected $type;
     protected $autoFields;
+
+    protected $database = null;
 
     public function __construct(Schema $schema, ObjectType $type)
     {
@@ -43,6 +41,10 @@ class SchemaModel
                     }
                 }
             }
+        }
+
+        if (!is_null($provider = $this->schema->getDatabaseProvider())) {
+            $this->database = $provider->bridge($this);
         }
     }
 
@@ -101,39 +103,6 @@ class SchemaModel
         return null;
     }
 
-    public function buildTypes(&$types)
-    {
-        $types[static::TYPE_FILTER] = new InputObjectType([
-            'name' => 'Filter',
-            'fields' => function() {
-                return [
-                    'AND' => [
-                        'type' => Type::listOf(Type::nonNull($this->schema->getType(static::TYPE_FILTER))),
-                    ],
-                    'OR' => [
-                        'type' => Type::listOf(Type::nonNull($this->schema->getType(static::TYPE_FILTER))),
-                    ],
-                    'field' => [ 'type' => Type::string() ],
-                    'operation' => [ 'type' => Type::string() ], // TODO enum Operation
-                    'value' => [ 'type' => Type::string() ], // TODO any
-                ];
-            },
-        ]);
-
-        $types[static::TYPE_ORDER_BY] = new InputObjectType([
-            'name' => 'OrderBy',
-            'fields' => function () {
-                return [
-                    'AND' => [
-                        'type' => Type::listOf(Type::nonNull($this->schema->getType(static::TYPE_ORDER_BY))),
-                    ],
-                    'field' => [ 'type' => Type::string() ],
-                    'direction' => [ 'type' => Type::string() ], // TODO enum OrderByDirection
-                ];
-            },
-        ]);
-    }
-
     public function buildQueries(&$queries)
     {
         $name = $this->getName();
@@ -145,7 +114,7 @@ class SchemaModel
                 static::PRIMARY_KEY => Type::id(),
             ],
             'resolve' => function ($root, $args) {
-                $results = $this->schema->getDatabaseBridge()->retrieve($this, [
+                $results = $this->database->retrieve([
                     'filter' => [
                         'field' => static::PRIMARY_KEY,
                         'value' => $args[static::PRIMARY_KEY],
@@ -160,13 +129,13 @@ class SchemaModel
         $queries['get' . $pluralName] = [
             'type' => Type::nonNull(Type::listOf(Type::nonNull($this->type))),
             'args' => [
-                'filter' => $this->schema->getType(static::TYPE_FILTER),
-                'orderBy' => $this->schema->getType(static::TYPE_ORDER_BY),
+                'filter' => $this->schema->getType(Schema::TYPE_FILTER),
+                'orderBy' => $this->schema->getType(Schema::TYPE_ORDER_BY),
                 'limit' => Type::int(),
                 'offset' => Type::int(),
             ],
             'resolve' => function ($root, $args) {
-                return $this->schema->getDatabaseBridge()->retrieve($this, $args);
+                return $this->database->retrieve($args);
             },
         ];
     }
@@ -191,7 +160,7 @@ class SchemaModel
                     }
                 }
 
-                return $this->schema->getDatabaseBridge()->create($this, $args);
+                return $this->database->create($args);
             },
         ];
 
@@ -208,7 +177,7 @@ class SchemaModel
                     $args[static::UPDATED_AT] = now();
                 }
 
-                return $this->schema->getDatabaseBridge()->update($this, $id, $args);
+                return $this->database->update($id, $args);
             },
         ];
 
@@ -218,7 +187,7 @@ class SchemaModel
                 static::PRIMARY_KEY => Type::nonNull(Type::id()),
             ],
             'resolve' => function ($root, $args) {
-                $this->schema->getDatabaseBridge()->delete($this, $args[static::PRIMARY_KEY]);
+                $this->database->delete($args[static::PRIMARY_KEY]);
 
                 return true;
             },
