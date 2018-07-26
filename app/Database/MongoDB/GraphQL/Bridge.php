@@ -36,7 +36,7 @@ class Bridge implements GraphQLDatabaseBridge
         }
 
         if (isset($restrictions['orderBy'])) {
-            // TODO
+            $this->applyOrderBy($query, $restrictions['orderBy']);
         }
 
         if (isset($restrictions['limit'])) {
@@ -85,18 +85,45 @@ class Bridge implements GraphQLDatabaseBridge
         return DB::collection($collection);
     }
 
-    protected function applyFilter($query, $filter)
+    protected function applyFilter($query, $filter, $or = false)
     {
         if (isset($filter['AND'])) {
-            // TODO
+            $query->where(function ($query) use ($filter) {
+                foreach ($filter['AND'] as $subFilter) {
+                    $this->applyFilter($query, $subFilter);
+                }
+            });
         } else if (isset($filter['OR'])) {
-            // TODO
-        } else if (isset($filter['operation'])) {
-            // TODO
+            $query->where(function ($query) use ($filter) {
+                foreach ($filter['OR'] as $subFilter) {
+                    $this->applyFilter($query, $subFilter, true);
+                }
+            });
+        } else if ($or) {
+            $query->orWhere(
+                $this->getDatabaseFieldName($filter['field']),
+                isset($filter['operation']) ? $filter['operation'] : '=',
+                $this->prepareDatabaseValue($filter['field'], $filter['value'])
+            );
         } else {
             $query->where(
                 $this->getDatabaseFieldName($filter['field']),
+                isset($filter['operation']) ? $filter['operation'] : '=',
                 $this->prepareDatabaseValue($filter['field'], $filter['value'])
+            );
+        }
+    }
+
+    protected function applyOrderBy($query, $orderBy)
+    {
+        if (isset($orderBy['AND'])) {
+            foreach ($orderBy['AND'] as $subOrderBy) {
+                $this->applyOrderBy($query, $subOrderBy);
+            }
+        } else {
+            $query->orderBy(
+                $this->getDatabaseFieldName($orderBy['field']),
+                isset($orderBy['direction']) ? $orderBy['direction'] : 'asc'
             );
         }
     }

@@ -3,6 +3,8 @@
 namespace Kinko\GraphQL;
 
 use GraphQL\Error\Error;
+use Kinko\GraphQL\Types\Filter;
+use Kinko\GraphQL\Types\OrderBy;
 use GraphQL\Type\Definition\Type;
 use Kinko\GraphQL\Types\DateType;
 use GraphQL\Language\AST\NodeKind;
@@ -129,8 +131,8 @@ class SchemaModel
         $queries['get' . $pluralName] = [
             'type' => Type::nonNull(Type::listOf(Type::nonNull($this->type))),
             'args' => [
-                'filter' => $this->schema->getType(Schema::TYPE_FILTER),
-                'orderBy' => $this->schema->getType(Schema::TYPE_ORDER_BY),
+                'filter' => $this->schema->getType(Filter::NAME),
+                'orderBy' => $this->schema->getType(OrderBy::NAME),
                 'limit' => Type::int(),
                 'offset' => Type::int(),
             ],

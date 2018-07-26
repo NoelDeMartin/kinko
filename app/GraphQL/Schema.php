@@ -4,6 +4,8 @@ namespace Kinko\GraphQL;
 
 use GraphQL\Error\Error;
 use GraphQL\Utils\BuildSchema;
+use Kinko\GraphQL\Types\Filter;
+use Kinko\GraphQL\Types\OrderBy;
 use GraphQL\Type\Definition\Type;
 use Kinko\GraphQL\Types\DateType;
 use GraphQL\Language\AST\NodeKind;
@@ -13,13 +15,9 @@ use GraphQL\Type\Definition\Directive;
 use GraphQL\Utils\ASTDefinitionBuilder;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Schema as GraphQLSchema;
-use GraphQL\Type\Definition\InputObjectType;
 
 class Schema
 {
-    const TYPE_FILTER = 'Filter';
-    const TYPE_ORDER_BY = 'OrderBy';
-
     protected $ast;
     protected $databaseProvider;
 
@@ -124,35 +122,8 @@ class Schema
     public function buildCustomArgumentTypes()
     {
         return [
-            static::TYPE_FILTER => new InputObjectType([
-                'name' => 'Filter',
-                'fields' => function() {
-                    return [
-                        'AND' => [
-                            'type' => Type::listOf(Type::nonNull($this->getType(static::TYPE_FILTER))),
-                        ],
-                        'OR' => [
-                            'type' => Type::listOf(Type::nonNull($this->getType(static::TYPE_FILTER))),
-                        ],
-                        'field' => [ 'type' => Type::string() ],
-                        'operation' => [ 'type' => Type::string() ], // TODO enum Operation
-                        'value' => [ 'type' => Type::string() ], // TODO any
-                    ];
-                },
-            ]),
-
-            static::TYPE_ORDER_BY => new InputObjectType([
-                'name' => 'OrderBy',
-                'fields' => function () {
-                    return [
-                        'AND' => [
-                            'type' => Type::listOf(Type::nonNull($this->getType(static::TYPE_ORDER_BY))),
-                        ],
-                        'field' => [ 'type' => Type::string() ],
-                        'direction' => [ 'type' => Type::string() ], // TODO enum OrderByDirection
-                    ];
-                },
-            ]),
+            Filter::NAME => new Filter,
+            OrderBy::NAME => new OrderBy,
         ];
     }
 
@@ -237,7 +208,7 @@ class Schema
 
     private function schemaDefinesOperations($config)
     {
-        // TODO check $config['astNode]
+        // TODO check $config['astNode']
 
         return false;
     }

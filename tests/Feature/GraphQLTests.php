@@ -89,6 +89,7 @@ class GraphQLTests extends TestCase
             "{
                 tasks: getTasks(filter: {
                     field: \"name\",
+                    operation: EQUALS,
                     value: \"{$name}\"
                 }) {
                     id,
@@ -111,9 +112,143 @@ class GraphQLTests extends TestCase
         }
     }
 
-    public function test_query_order_by()
+    public function test_query_complex_filter()
     {
-        $this->markTestIncomplete();
+        factory(Application::class)->create([
+            'schema' => load_stub('schema.json'),
+        ]);
+
+        $this->createTasks(1, ['name' => 'a', 'description' => 'c']);
+        $this->createTasks(1, ['name' => 'b', 'description' => 'a']);
+        $tasks = collect([
+            $this->createTasks(1, ['name' => 'a', 'description' => 'a']),
+            $this->createTasks(1, ['name' => 'a', 'description' => 'b']),
+        ]);
+
+        $response = $this->login()->graphql(
+            "{
+                tasks: getTasks(filter: {
+                    AND: [
+                        {
+                            field: \"name\",
+                            value: \"a\"
+                        },
+                        {
+                            OR: [
+                                {
+                                    field: \"description\",
+                                    value: \"a\"
+                                },
+                                {
+                                    field: \"description\",
+                                    value: \"b\"
+                                }
+                            ]
+                        }
+                    ]
+                }) {
+                    id,
+                    name,
+                    description,
+                    author_id,
+                    created_at,
+                    updated_at
+                }
+            }"
+        );
+
+        $response->assertSuccessful();
+
+        $responseTasks = $response->json('data.tasks');
+        $this->assertCount($tasks->count(), $responseTasks);
+
+        foreach ($responseTasks as $i => $task) {
+            $this->assertTaskEquals($tasks[$i], $task);
+        }
+    }
+
+    public function test_query_simple_order_by()
+    {
+        factory(Application::class)->create([
+            'schema' => load_stub('schema.json'),
+        ]);
+
+        $tasks = collect([
+            $this->createTasks(1, ['name' => 'a']),
+            $this->createTasks(1, ['name' => 'b']),
+            $this->createTasks(1, ['name' => 'c']),
+        ])->reverse()->values();
+
+        $response = $this->login()->graphql(
+            "{
+                tasks: getTasks(orderBy: {
+                    field: \"name\",
+                    direction: DESCENDING
+                }) {
+                    id,
+                    name,
+                    description,
+                    author_id,
+                    created_at,
+                    updated_at
+                }
+            }"
+        );
+
+        $response->assertSuccessful();
+
+        $responseTasks = $response->json('data.tasks');
+        $this->assertCount($tasks->count(), $responseTasks);
+
+        foreach ($responseTasks as $i => $task) {
+            $this->assertTaskEquals($tasks[$i], $task);
+        }
+    }
+
+    public function test_query_complex_order_by()
+    {
+        factory(Application::class)->create([
+            'schema' => load_stub('schema.json'),
+        ]);
+
+        $tasks = collect([
+            $this->createTasks(1, ['name' => 'a', 'description' => 'b']),
+            $this->createTasks(1, ['name' => 'a', 'description' => 'a']),
+            $this->createTasks(1, ['name' => 'b', 'description' => 'c']),
+            $this->createTasks(1, ['name' => 'c', 'description' => 'c']),
+        ])->reverse()->values();
+
+        $response = $this->login()->graphql(
+            "{
+                tasks: getTasks(orderBy: {
+                    AND: [
+                        {
+                            field: \"name\",
+                            direction: DESCENDING
+                        },
+                        {
+                            field: \"description\"
+                        }
+                    ]
+                }) {
+                    id,
+                    name,
+                    description,
+                    author_id,
+                    created_at,
+                    updated_at
+                }
+            }"
+        );
+
+        $response->assertSuccessful();
+
+        $responseTasks = $response->json('data.tasks');
+        $this->assertCount($tasks->count(), $responseTasks);
+
+        foreach ($responseTasks as $i => $task) {
+            $this->assertTaskEquals($tasks[$i], $task);
+        }
     }
 
     public function test_query_limit()
@@ -344,7 +479,7 @@ class GraphQLTests extends TestCase
             $tasks->push((object) $task);
         }
 
-        return $tasks;
+        return $count > 1 ? $tasks : $tasks[0];
     }
 
     private function assertTaskEquals($expected, $actual)

@@ -2,6 +2,7 @@
 
 namespace Kinko\Database\MongoDB\Query;
 
+use Closure;
 use InvalidArgumentException;
 use Illuminate\Support\Collection;
 use Kinko\Support\Facades\MongoDB;
@@ -9,6 +10,10 @@ use Kinko\Database\Query\NonRelationalBuilder;
 
 class Builder extends NonRelationalBuilder
 {
+    public $operators = ['=', '>', '>=', '<', '<='];
+
+    public $booleans = ['and', 'or'];
+
     public function where($field, $operator = null, $value = null, $boolean = 'and')
     {
         if (func_num_args() === 2) {
@@ -20,11 +25,11 @@ class Builder extends NonRelationalBuilder
             return $this->whereNested($field, $boolean);
         }
 
-        if (!in_array($operator, ['=', '>', '>=', '<', '<='])) {
+        if (!in_array($operator, $this->operators)) {
             throw new InvalidArgumentException('Illegal operator and value combination.');
         }
 
-        if ($boolean !== 'and') {
+        if (!in_array($boolean, $this->booleans)) {
             throw new InvalidArgumentException('Illegal boolean operation.');
         }
 
@@ -41,7 +46,7 @@ class Builder extends NonRelationalBuilder
 
     public function whereIn($field, $values, $boolean = 'and', $not = false)
     {
-        if ($boolean !== 'and') {
+        if (!in_array($boolean, $this->booleans)) {
             throw new InvalidArgumentException('Illegal boolean operation.');
         }
 
@@ -232,21 +237,30 @@ class Builder extends NonRelationalBuilder
         foreach ($this->wheres as $where) {
             switch ($where['type']) {
                 case 'Basic':
+                    $compiled = [];
                     switch ($where['operator']) {
                         case '=':
-                            $match[$where['field']] = $where['value'];
+                            $compiled[$where['field']] = $where['value'];
                             break;
                         case '>':
-                            $match[$where['field']] = ['$gt' => $where['value']];
+                            $compiled[$where['field']] = ['$gt' => $where['value']];
                             break;
                         case '>=':
-                            $match[$where['field']] = ['$gte' => $where['value']];
+                            $compiled[$where['field']] = ['$gte' => $where['value']];
                             break;
                         case '<':
-                            $match[$where['field']] = ['$lt' => $where['value']];
+                            $compiled[$where['field']] = ['$lt' => $where['value']];
                             break;
                         case '<=':
-                            $match[$where['field']] = ['$lte' => $where['value']];
+                            $compiled[$where['field']] = ['$lte' => $where['value']];
+                            break;
+                    }
+                    switch ($where['boolean']) {
+                        case 'and':
+                            $match = array_merge_recursive($match, $compiled);
+                            break;
+                        case 'or':
+                            $match = array_merge_recursive($match, ['$or' => [$compiled]]);
                             break;
                     }
                     break;
@@ -256,7 +270,20 @@ class Builder extends NonRelationalBuilder
                     ];
                     break;
                 case 'NotIn':
-                    // TODO
+                    // TODO implement
+                    throw new InvalidArgumentException('Operation not implemented for MongoDB.');
+                    break;
+                case 'Nested':
+                    $subMatch = $where['query']->buildWheresMatch();
+                    switch($where['boolean']) {
+                        case 'and':
+                            $match = array_merge_recursive($match, $subMatch);
+                            break;
+                        case 'or':
+                            // TODO implement
+                            throw new InvalidArgumentException('Operation not implemented for MongoDB.');
+                            break;
+                    }
                     break;
             }
         }
