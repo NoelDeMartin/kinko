@@ -33,7 +33,9 @@ interface GraphQLDatabaseBridge
     /**
      * Delete model.
      *
-     * @param mixed $id
+     * @param array $filter
+     * @param bool $returnIds
+     * @return mixed
      */
-    public function delete($id);
+    public function delete(array $filter, bool $returnIds);
 }

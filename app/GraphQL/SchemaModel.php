@@ -199,7 +199,7 @@ class SchemaModel
             'type' => Type::nonNull(Type::int()),
             'args' => [
                 'values' => Type::nonNull($fieldsType),
-                'filter' => $this->schema->getType(Filter::NAME)
+                'filter' => $this->schema->getType(Filter::NAME),
             ],
             'resolve' => function ($root, $args) {
                 if ($this->isAuto(static::UPDATED_AT)) {
@@ -218,7 +218,7 @@ class SchemaModel
             'type' => Type::nonNull(Type::listOf(Type::nonNull($this->type))),
             'args' => [
                 'values' => Type::nonNull($fieldsType),
-                'filter' => $this->schema->getType(Filter::NAME)
+                'filter' => $this->schema->getType(Filter::NAME),
             ],
             'resolve' => function ($root, $args) {
                 if ($this->isAuto(static::UPDATED_AT)) {
@@ -234,14 +234,37 @@ class SchemaModel
         ];
 
         $mutations['delete' . $name] = [
-            'type' => Type::boolean(),
+            'type' => Type::nonNull(Type::boolean()),
             'args' => [
                 static::PRIMARY_KEY => Type::nonNull(Type::id()),
             ],
             'resolve' => function ($root, $args) {
-                $this->database->delete($args[static::PRIMARY_KEY]);
+                $count = $this->database->delete([
+                    'field' => static::PRIMARY_KEY,
+                    'value' => $args[static::PRIMARY_KEY],
+                ], false);
 
-                return true;
+                return $count > 0;
+            },
+        ];
+
+        $mutations['delete' . $pluralName] = [
+            'type' => Type::nonNull(Type::int()),
+            'args' => [
+                'filter' => $this->schema->getType(Filter::NAME),
+            ],
+            'resolve' => function ($root, $args) {
+                return $this->database->delete(isset($args['filter']) ? $args['filter'] : [], false);
+            },
+        ];
+
+        $mutations['delete' . $pluralName . 'AndReturnIds'] = [
+            'type' => Type::nonNull(Type::listOf(Type::nonNull(Type::id()))),
+            'args' => [
+                'filter' => $this->schema->getType(Filter::NAME),
+            ],
+            'resolve' => function ($root, $args) {
+                return $this->database->delete(isset($args['filter']) ? $args['filter'] : [], true);
             },
         ];
     }

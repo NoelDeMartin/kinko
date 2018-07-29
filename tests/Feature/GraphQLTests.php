@@ -511,7 +511,7 @@ class GraphQLTests extends TestCase
         }
     }
 
-    public function test_mutation_delete()
+    public function test_mutation_delete_one()
     {
         factory(Application::class)->create([
             'schema' => load_stub('schema.json'),
@@ -538,6 +538,80 @@ class GraphQLTests extends TestCase
 
         $this->assertEquals(0, DB::collection('store-tasks')->count());
         $this->assertTrue($response->json('data.result'));
+    }
+
+    public function test_mutation_delete_many_and_return_count()
+    {
+        factory(Application::class)->create([
+            'schema' => load_stub('schema.json'),
+        ]);
+
+        $user = factory(User::class)->create();
+        $name = $this->faker->sentence;
+
+        $tasks = $this->createTasks(random_int(5, 10));
+        $removedTasks = $this->createTasks(random_int(5, 10), [
+            'name' => $name,
+        ]);
+
+        $response = $this->login($user)->graphql(
+            "mutation {
+                count: deleteTasks(
+                    filter: {
+                        field: \"name\",
+                        value: \"$name\"
+                    }
+                )
+            }"
+        );
+
+        $response->assertSuccessful();
+        $response->assertJsonStructure(['data' => ['count']]);
+
+        $this->assertEquals($removedTasks->count(), $response->json('data.count'));
+
+        foreach ($tasks as $task) {
+            $this->assertNotNull(DB::collection('store-tasks')->where('_id', MongoDB::key($task->id))->first());
+        }
+
+        foreach ($removedTasks as $task) {
+            $this->assertNull(DB::collection('store-tasks')->where('_id', MongoDB::key($task->id))->first());
+        }
+    }
+
+    public function test_mutation_delete_many_and_return_ids()
+    {
+        factory(Application::class)->create([
+            'schema' => load_stub('schema.json'),
+        ]);
+
+        $user = factory(User::class)->create();
+        $name = $this->faker->sentence;
+
+        $tasks = $this->createTasks(random_int(5, 10));
+        $removedTasks = $this->createTasks(random_int(5, 10), [
+            'name' => $name,
+        ]);
+
+        $response = $this->login($user)->graphql(
+            "mutation {
+                ids: deleteTasksAndReturnIds(
+                    filter: {
+                        field: \"name\",
+                        value: \"$name\"
+                    }
+                )
+            }"
+        );
+
+        $response->assertSuccessful();
+        $response->assertJsonStructure(['data' => ['ids']]);
+
+        $this->assertCount($removedTasks->count(), $response->json('data.ids'));
+
+        foreach ($response->json('data.ids') as $i => $id) {
+            $this->assertEquals($removedTasks[$i]->id, $id);
+        }
     }
 
     public function test_mutation_primary_key_protected()

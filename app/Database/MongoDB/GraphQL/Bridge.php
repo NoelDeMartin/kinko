@@ -94,9 +94,19 @@ class Bridge implements GraphQLDatabaseBridge
         }
     }
 
-    public function delete($id)
+    public function delete(array $filter, bool $returnIds)
     {
-        $this->query()->where('_id', MongoDB::key($id))->delete();
+        $query = $this->query();
+
+        if (!empty($filter)) {
+            $this->applyFilter($query, $filter);
+        }
+
+        if ($returnIds) {
+            $deletedRecordsIds = $query->pluck('_id');
+        }
+
+        return $returnIds ? $deletedRecordsIds->all() : $query->delete();
     }
 
     protected function query()
