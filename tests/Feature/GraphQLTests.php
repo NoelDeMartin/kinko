@@ -354,7 +354,7 @@ class GraphQLTests extends TestCase
         $this->assertEquals($now->getTImestamp(), $response->json('data.task.updated_at'));
     }
 
-    public function test_mutation_update()
+    public function test_mutation_update_one()
     {
         factory(Application::class)->create([
             'schema' => load_stub('schema.json'),
@@ -403,6 +403,112 @@ class GraphQLTests extends TestCase
         $this->assertArrayNotHasKey('description', $document);
         $this->assertArrayHasKey('created_at', $document);
         $this->assertArrayHasKey('updated_at', $document);
+    }
+
+    public function test_mutation_update_many_and_return_count()
+    {
+        factory(Application::class)->create([
+            'schema' => load_stub('schema.json'),
+        ]);
+
+        $user = factory(User::class)->create();
+        $originalName = $this->faker->sentence;
+        $updatedName = $this->faker->sentence;
+
+        $tasks = $this->createTasks(random_int(5, 10));
+        $mutatedTasks = $this->createTasks(random_int(5, 10), [
+            'name' => $originalName,
+        ]);
+
+        $response = $this->login($user)->graphql(
+            "mutation {
+                count: updateTasks(
+                    filter: {
+                        field: \"name\",
+                        value: \"$originalName\"
+                    },
+                    values: {
+                        name: \"$updatedName\",
+                        description: null,
+                    }
+                )
+            }"
+        );
+
+        $response->assertSuccessful();
+        $response->assertJsonStructure(['data' => ['count']]);
+
+        $this->assertEquals($mutatedTasks->count(), $response->json('data.count'));
+
+        foreach ($tasks as $task) {
+            $updatedTask = DB::collection('store-tasks')->where('_id', MongoDB::key($task->id))->first();
+            $this->assertEquals($task->name, $updatedTask['name']);
+            $this->assertEquals($task->description, $updatedTask['description']);
+            $this->assertEquals($task->author_id, $updatedTask['author_id']);
+            $this->assertEquals($task->id, $updatedTask['_id']);
+            $this->assertEquals($task->created_at->getTimestamp(), $updatedTask['created_at']->toDateTime()->getTimestamp());
+            $this->assertEquals($task->updated_at->getTimestamp(), $updatedTask['updated_at']->toDateTime()->getTimestamp());
+        }
+
+        foreach ($mutatedTasks as $task) {
+            $updatedTask = DB::collection('store-tasks')->where('_id', MongoDB::key($task->id))->first();
+            $this->assertEquals($updatedName, $updatedTask['name']);
+            $this->assertArrayNotHasKey('description', $updatedTask);
+            $this->assertEquals($task->author_id, $updatedTask['author_id']);
+            $this->assertEquals($task->created_at->getTimestamp(), $updatedTask['created_at']->toDateTime()->getTimestamp());
+            $this->assertEquals($task->updated_at->getTimestamp(), $updatedTask['updated_at']->toDateTime()->getTimestamp());
+        }
+    }
+
+    public function test_mutation_update_many_and_return_objects()
+    {
+        factory(Application::class)->create([
+            'schema' => load_stub('schema.json'),
+        ]);
+
+        $user = factory(User::class)->create();
+        $originalName = $this->faker->sentence;
+        $updatedName = $this->faker->sentence;
+
+        $tasks = $this->createTasks(random_int(5, 10));
+        $mutatedTasks = $this->createTasks(random_int(5, 10), [
+            'name' => $originalName,
+        ]);
+
+        $response = $this->login($user)->graphql(
+            "mutation {
+                tasks: updateTasksAndReturnObjects(
+                    filter: {
+                        field: \"name\",
+                        value: \"$originalName\"
+                    },
+                    values: {
+                        name: \"$updatedName\",
+                        description: null,
+                    }
+                ) {
+                    id,
+                    name,
+                    description,
+                    author_id,
+                    created_at,
+                    updated_at
+                }
+            }"
+        );
+
+        $response->assertSuccessful();
+        $response->assertJsonStructure(['data' => ['tasks' => ['*' => ['id', 'name', 'description', 'created_at', 'updated_at']]]]);
+
+        $this->assertCount($mutatedTasks->count(), $response->json('data.tasks'));
+
+        foreach ($response->json('data.tasks') as $i => $task) {
+            $this->assertEquals($updatedName, $task['name']);
+            $this->assertNull($task['description']);
+            $this->assertEquals($mutatedTasks[$i]->author_id, $task['author_id']);
+            $this->assertEquals($mutatedTasks[$i]->created_at->getTimestamp(), $task['created_at']);
+            $this->assertEquals($mutatedTasks[$i]->updated_at->getTimestamp(), $task['updated_at']);
+        }
     }
 
     public function test_mutation_delete()

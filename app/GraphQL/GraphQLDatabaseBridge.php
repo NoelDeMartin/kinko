@@ -7,10 +7,10 @@ interface GraphQLDatabaseBridge
     /**
      * Create new model.
      *
-     * @param mixed $args
+     * @param array $args
      * @return mixed
      */
-    public function create($args);
+    public function create(array $args);
 
     /**
      * Retrieve models.
@@ -23,11 +23,12 @@ interface GraphQLDatabaseBridge
     /**
      * Update model.
      *
-     * @param mixed $id
-     * @param mixed $args
+     * @param array $filter
+     * @param array $args
+     * @param bool $returnObjects
      * @return mixed
      */
-    public function update($id, $args);
+    public function update(array $filter, array $args, bool $returnObjects);
 
     /**
      * Delete model.

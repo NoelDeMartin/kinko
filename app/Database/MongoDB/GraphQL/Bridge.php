@@ -18,7 +18,7 @@ class Bridge implements GraphQLDatabaseBridge
         $this->model = $model;
     }
 
-    public function create($args)
+    public function create(array $args)
     {
         $id = $this->query()->insertGetId($this->prepareDatabaseValues($args));
 
@@ -52,7 +52,7 @@ class Bridge implements GraphQLDatabaseBridge
         });
     }
 
-    public function update($id, $args)
+    public function update(array $filter, array $args, bool $returnObjects)
     {
         if (!empty($args)) {
             $updated = [];
@@ -66,12 +66,32 @@ class Bridge implements GraphQLDatabaseBridge
                 }
             }
 
-            $this->query()->where('_id', MongoDB::key($id))->update($updated, $removed);
+            $query = $this->query();
+
+            if (!empty($filter)) {
+                $this->applyFilter($query, $filter);
+            }
+
+            if ($returnObjects) {
+                $updatedRecordsIds = $query->pluck('_id');
+            }
+
+            $count = $query->update($updated, $removed);
+
+            if ($returnObjects) {
+                return $this
+                    ->query()
+                    ->whereIn('_id', $updatedRecordsIds->all())
+                    ->get()
+                    ->map(function ($result) {
+                        return $this->convertResult($result);
+                    });
+            } else {
+                return $count;
+            }
+        } else {
+            return $returnObjects ? [] : 0;
         }
-
-        $result = $this->query()->where('_id', MongoDB::key($id))->first();
-
-        return $this->convertResult($result);
     }
 
     public function delete($id)

@@ -10,6 +10,7 @@ use Kinko\GraphQL\Types\DateType;
 use GraphQL\Language\AST\NodeKind;
 use Illuminate\Support\Facades\Auth;
 use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\InputObjectType;
 
 class SchemaModel
 {
@@ -145,6 +146,12 @@ class SchemaModel
     public function buildMutations(&$mutations)
     {
         $name = $this->getName();
+        $pluralName = $this->getPluralName();
+
+        $fieldsType = new InputObjectType([
+            'name' => $name . 'Fields',
+            'fields' => $this->buildTypeArguments(false),
+        ]);
 
         $mutations['create' . $name] = [
             'type' => Type::nonNull($this->type),
@@ -179,7 +186,50 @@ class SchemaModel
                     $args[static::UPDATED_AT] = now();
                 }
 
-                return $this->database->update($id, $args);
+                $results = $this->database->update([
+                    'field' => static::PRIMARY_KEY,
+                    'value' => $id,
+                ], $args, true);
+
+                return count($results) > 0 ? $results[0] : null;
+            },
+        ];
+
+        $mutations['update' . $pluralName] = [
+            'type' => Type::nonNull(Type::int()),
+            'args' => [
+                'values' => Type::nonNull($fieldsType),
+                'filter' => $this->schema->getType(Filter::NAME)
+            ],
+            'resolve' => function ($root, $args) {
+                if ($this->isAuto(static::UPDATED_AT)) {
+                    $args[static::UPDATED_AT] = now();
+                }
+
+                return $this->database->update(
+                    isset($args['filter']) ? $args['filter'] : [],
+                    $args['values'],
+                    false
+                );
+            },
+        ];
+
+        $mutations['update' . $pluralName . 'AndReturnObjects'] = [
+            'type' => Type::nonNull(Type::listOf(Type::nonNull($this->type))),
+            'args' => [
+                'values' => Type::nonNull($fieldsType),
+                'filter' => $this->schema->getType(Filter::NAME)
+            ],
+            'resolve' => function ($root, $args) {
+                if ($this->isAuto(static::UPDATED_AT)) {
+                    $args[static::UPDATED_AT] = now();
+                }
+
+                return $this->database->update(
+                    isset($args['filter']) ? $args['filter'] : [],
+                    $args['values'],
+                    true
+                );
             },
         ];
 
