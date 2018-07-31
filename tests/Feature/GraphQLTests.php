@@ -5,18 +5,23 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use Kinko\Models\User;
 use Kinko\Models\Application;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Kinko\Support\Facades\MongoDB;
+use Kinko\Models\Passport\Client;
 
 class GraphQLTests extends TestCase
 {
+    public function test_require_login()
+    {
+        $response = $this->graphql('{ping}');
+
+        $response->assertStatus(Response::HTTP_UNAUTHORIZED);
+    }
+
     public function test_introspection()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
         $response = $this->login()->graphql('{__schema{types{name}}}');
 
         $response->assertSuccessful();
@@ -26,12 +31,18 @@ class GraphQLTests extends TestCase
         $this->assertContains('Task', $names);
     }
 
+    public function test_ping()
+    {
+        $response = $this->login()->graphql('{ping}');
+
+        $response->assertSuccessful();
+        $response->assertJsonStructure(['data' => ['ping']]);
+
+        $this->assertEquals('pong', $response->json('data.ping'));
+    }
+
     public function test_query()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
         $tasksCount = random_int(5, 10);
         $this->createTasks($tasksCount);
 
@@ -45,10 +56,6 @@ class GraphQLTests extends TestCase
 
     public function test_query_find_one()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
         $task = $this->createTasks(random_int(5, 10))->random();
 
         $response = $this->login()->graphql(
@@ -71,16 +78,12 @@ class GraphQLTests extends TestCase
 
     public function test_query_simple_filter()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
         $tasks = $this->createTasks(random_int(5, 10))->random(random_int(2, 4));
 
         $name = $this->faker->unique()->sentence;
         foreach ($tasks as $task) {
             $task->name = $name;
-            DB::collection('store-tasks')
+            DB::collection('store.tasks')
                 ->where('_id', MongoDB::key($task->id))
                 ->update(compact('name'));
         }
@@ -114,10 +117,6 @@ class GraphQLTests extends TestCase
 
     public function test_query_complex_filter()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
         $this->createTasks(1, ['name' => 'a', 'description' => 'c']);
         $this->createTasks(1, ['name' => 'b', 'description' => 'a']);
         $tasks = collect([
@@ -169,10 +168,6 @@ class GraphQLTests extends TestCase
 
     public function test_query_simple_order_by()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
         $tasks = collect([
             $this->createTasks(1, ['name' => 'a']),
             $this->createTasks(1, ['name' => 'b']),
@@ -207,10 +202,6 @@ class GraphQLTests extends TestCase
 
     public function test_query_complex_order_by()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
         $tasks = collect([
             $this->createTasks(1, ['name' => 'a', 'description' => 'b']),
             $this->createTasks(1, ['name' => 'a', 'description' => 'a']),
@@ -253,10 +244,6 @@ class GraphQLTests extends TestCase
 
     public function test_query_limit()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
         $tasks = $this->createTasks(random_int(5, 10));
         $limit = intval($tasks->count() / 2);
 
@@ -285,10 +272,6 @@ class GraphQLTests extends TestCase
 
     public function test_query_offset()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
         $tasks = $this->createTasks(random_int(5, 10));
         $offset = intval($tasks->count() / 2);
 
@@ -317,10 +300,6 @@ class GraphQLTests extends TestCase
 
     public function test_mutation_create()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
         $user = factory(User::class)->create();
         $name = $this->faker->sentence;
         $description = $this->faker->sentence;
@@ -346,7 +325,7 @@ class GraphQLTests extends TestCase
         $response->assertSuccessful();
         $response->assertJsonStructure(['data' => ['task' => ['id', 'name', 'description', 'author_id', 'created_at', 'updated_at']]]);
 
-        $this->assertEquals(1, DB::collection('store-tasks')->count());
+        $this->assertEquals(1, DB::collection('store.tasks')->count());
         $this->assertEquals($name, $response->json('data.task.name'));
         $this->assertEquals($description, $response->json('data.task.description'));
         $this->assertEquals($user->id, $response->json('data.task.author_id'));
@@ -356,14 +335,9 @@ class GraphQLTests extends TestCase
 
     public function test_mutation_update_one()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
-        $user = factory(User::class)->create();
         $name = $this->faker->sentence;
         $now = now();
-        $id = DB::collection('store-tasks')->insertGetId([
+        $id = DB::collection('store.tasks')->insertGetId([
             'name' => $this->faker->sentence,
             'description' => $this->faker->sentence,
             'created_at' => MongoDB::date($now),
@@ -373,7 +347,7 @@ class GraphQLTests extends TestCase
         $later = $now->copy()->addDay();
         Carbon::setTestNow($later);
 
-        $response = $this->login($user)->graphql(
+        $response = $this->login()->graphql(
             "mutation {
                 task: updateTask(
                     id: \"$id\",
@@ -398,7 +372,7 @@ class GraphQLTests extends TestCase
         $this->assertEquals($now->getTimestamp(), $response->json('data.task.created_at'));
         $this->assertEquals($later->getTimestamp(), $response->json('data.task.updated_at'));
 
-        $document = DB::collection('store-tasks')->first();
+        $document = DB::collection('store.tasks')->first();
         $this->assertArrayHasKey('name', $document);
         $this->assertArrayNotHasKey('description', $document);
         $this->assertArrayHasKey('created_at', $document);
@@ -407,11 +381,6 @@ class GraphQLTests extends TestCase
 
     public function test_mutation_update_many_and_return_count()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
-        $user = factory(User::class)->create();
         $originalName = $this->faker->sentence;
         $updatedName = $this->faker->sentence;
 
@@ -420,7 +389,7 @@ class GraphQLTests extends TestCase
             'name' => $originalName,
         ]);
 
-        $response = $this->login($user)->graphql(
+        $response = $this->login()->graphql(
             "mutation {
                 count: updateTasks(
                     filter: {
@@ -441,7 +410,7 @@ class GraphQLTests extends TestCase
         $this->assertEquals($mutatedTasks->count(), $response->json('data.count'));
 
         foreach ($tasks as $task) {
-            $updatedTask = DB::collection('store-tasks')->where('_id', MongoDB::key($task->id))->first();
+            $updatedTask = DB::collection('store.tasks')->where('_id', MongoDB::key($task->id))->first();
             $this->assertEquals($task->name, $updatedTask['name']);
             $this->assertEquals($task->description, $updatedTask['description']);
             $this->assertEquals($task->author_id, $updatedTask['author_id']);
@@ -451,7 +420,7 @@ class GraphQLTests extends TestCase
         }
 
         foreach ($mutatedTasks as $task) {
-            $updatedTask = DB::collection('store-tasks')->where('_id', MongoDB::key($task->id))->first();
+            $updatedTask = DB::collection('store.tasks')->where('_id', MongoDB::key($task->id))->first();
             $this->assertEquals($updatedName, $updatedTask['name']);
             $this->assertArrayNotHasKey('description', $updatedTask);
             $this->assertEquals($task->author_id, $updatedTask['author_id']);
@@ -462,11 +431,6 @@ class GraphQLTests extends TestCase
 
     public function test_mutation_update_many_and_return_objects()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
-        $user = factory(User::class)->create();
         $originalName = $this->faker->sentence;
         $updatedName = $this->faker->sentence;
 
@@ -475,7 +439,7 @@ class GraphQLTests extends TestCase
             'name' => $originalName,
         ]);
 
-        $response = $this->login($user)->graphql(
+        $response = $this->login()->graphql(
             "mutation {
                 tasks: updateTasksAndReturnObjects(
                     filter: {
@@ -513,21 +477,16 @@ class GraphQLTests extends TestCase
 
     public function test_mutation_delete_one()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
-        $user = factory(User::class)->create();
         $name = $this->faker->sentence;
         $now = now();
-        $id = DB::collection('store-tasks')->insertGetId([
+        $id = DB::collection('store.tasks')->insertGetId([
             'name' => $this->faker->sentence,
             'description' => $this->faker->sentence,
             'created_at' => MongoDB::date($now),
             'updated_at' => MongoDB::date($now),
         ]);
 
-        $response = $this->login($user)->graphql(
+        $response = $this->login()->graphql(
             "mutation {
                 result: deleteTask(id: \"$id\")
             }"
@@ -536,17 +495,12 @@ class GraphQLTests extends TestCase
         $response->assertSuccessful();
         $response->assertJsonStructure(['data' => ['result']]);
 
-        $this->assertEquals(0, DB::collection('store-tasks')->count());
+        $this->assertEquals(0, DB::collection('store.tasks')->count());
         $this->assertTrue($response->json('data.result'));
     }
 
     public function test_mutation_delete_many_and_return_count()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
-        $user = factory(User::class)->create();
         $name = $this->faker->sentence;
 
         $tasks = $this->createTasks(random_int(5, 10));
@@ -554,7 +508,7 @@ class GraphQLTests extends TestCase
             'name' => $name,
         ]);
 
-        $response = $this->login($user)->graphql(
+        $response = $this->login()->graphql(
             "mutation {
                 count: deleteTasks(
                     filter: {
@@ -571,21 +525,16 @@ class GraphQLTests extends TestCase
         $this->assertEquals($removedTasks->count(), $response->json('data.count'));
 
         foreach ($tasks as $task) {
-            $this->assertNotNull(DB::collection('store-tasks')->where('_id', MongoDB::key($task->id))->first());
+            $this->assertNotNull(DB::collection('store.tasks')->where('_id', MongoDB::key($task->id))->first());
         }
 
         foreach ($removedTasks as $task) {
-            $this->assertNull(DB::collection('store-tasks')->where('_id', MongoDB::key($task->id))->first());
+            $this->assertNull(DB::collection('store.tasks')->where('_id', MongoDB::key($task->id))->first());
         }
     }
 
     public function test_mutation_delete_many_and_return_ids()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
-        $user = factory(User::class)->create();
         $name = $this->faker->sentence;
 
         $tasks = $this->createTasks(random_int(5, 10));
@@ -593,7 +542,7 @@ class GraphQLTests extends TestCase
             'name' => $name,
         ]);
 
-        $response = $this->login($user)->graphql(
+        $response = $this->login()->graphql(
             "mutation {
                 ids: deleteTasksAndReturnIds(
                     filter: {
@@ -616,10 +565,6 @@ class GraphQLTests extends TestCase
 
     public function test_mutation_primary_key_protected()
     {
-        factory(Application::class)->create([
-            'schema' => load_stub('schema.json'),
-        ]);
-
         $id = str_random();
         $name = $this->faker->sentence;
 
@@ -636,9 +581,25 @@ class GraphQLTests extends TestCase
         $response->assertGraphQLError('Unknown argument "id" on field "createTask" of type "Mutation".');
     }
 
+    public function login($user = null)
+    {
+        $client = factory(Client::class)->create();
+        $application = factory(Application::class)->create([
+            'schema' => load_stub('schema.json'),
+            'client_id' => $client->id,
+        ]);
+
+        parent::login($user);
+
+        $token = auth()->user()->token();
+        $token->shouldReceive('getAttribute')->with('client')->andReturn($client);
+
+        return $this;
+    }
+
     private function graphql($query)
     {
-        return $this->post('/store', compact('query'));
+        return $this->postJson('/store', compact('query'));
     }
 
     private function createTasks($count = 1, $attributes = [])
@@ -653,7 +614,7 @@ class GraphQLTests extends TestCase
                 'created_at' => MongoDB::date($now),
                 'updated_at' => MongoDB::date($now),
             ], $attributes);
-            $task['id'] = (string) DB::collection('store-tasks')->insertGetId($task);
+            $task['id'] = (string) DB::collection('store.tasks')->insertGetId($task);
             $task['created_at'] = $task['created_at']->toDateTime();
             $task['updated_at'] = $task['updated_at']->toDateTime();
             $tasks->push((object) $task);

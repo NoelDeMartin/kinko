@@ -2,6 +2,7 @@
 
 namespace Kinko\Models\Passport;
 
+use Kinko\Models\Application;
 use Kinko\Database\MongoDB\Soukai\Model;
 
 class Client extends Model
@@ -28,6 +29,11 @@ class Client extends Model
     public function tokens()
     {
         return $this->hasMany(AccessToken::class, 'client_id');
+    }
+
+    public function application()
+    {
+        return $this->hasOne(Application::class);
     }
 
     public function firstParty()

@@ -2,9 +2,16 @@
 
 namespace Kinko\Database\MongoDB\Soukai;
 
+use InvalidArgumentException;
+
+use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Model as EloquentModel;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+
 use Kinko\Support\Facades\MongoDB;
 use Kinko\Database\Soukai\NonRelationalModel;
 use Kinko\Database\MongoDB\Soukai\Concerns\HasKeys;
+use Kinko\Database\MongoDB\Soukai\Relations\HasOne;
 use Kinko\Database\MongoDB\Query\Builder as QueryBuilder;
 use Kinko\Database\MongoDB\Soukai\Builder as SoukaiBuilder;
 
@@ -69,6 +76,11 @@ class Model extends NonRelationalModel
                 : null);
     }
 
+    public function getForeignKey()
+    {
+        return Str::snake(class_basename($this)).'_id';
+    }
+
     public function getCasts()
     {
         $keyCasts = [];
@@ -78,6 +90,22 @@ class Model extends NonRelationalModel
         }
 
         return array_merge($keyCasts, parent::getCasts());
+    }
+
+    protected function newHasOne(
+        EloquentBuilder $query,
+        EloquentModel $parent,
+        $foreignKey,
+        $localKey
+    )
+    {
+        if (!$query instanceof Builder) {
+            throw new InvalidArgumentException('hasOne query must be instance of ' . Builder::class);
+        }
+        if (!$parent instanceof Model) {
+            throw new InvalidArgumentException('hasOne model must be instance of ' . Model::class);
+        }
+        return new HasOne($query, $parent, $foreignKey, $localKey);
     }
 
     protected function castAttribute($key, $value)

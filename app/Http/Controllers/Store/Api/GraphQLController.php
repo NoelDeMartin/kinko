@@ -5,17 +5,14 @@ namespace Kinko\Http\Controllers\Store\Api;
 use Kinko\Models\User;
 use Kinko\Models\Application;
 use Kinko\Support\Facades\GraphQL;
+use Illuminate\Support\Facades\Auth;
 use Psr\Http\Message\ServerRequestInterface;
 
 class GraphQLController
 {
     public function __invoke(ServerRequestInterface $request)
     {
-        // TODO implement authentication
-        auth()->setUser(User::first());
-
-        // TODO use authentication to retrieve application
-        $application = Application::first();
+        $application = Auth::user()->token()->client->application;
 
         return GraphQL::query($application, $request);
     }

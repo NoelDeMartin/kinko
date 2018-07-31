@@ -111,7 +111,7 @@ class Bridge implements GraphQLDatabaseBridge
 
     protected function query()
     {
-        $collection = 'store-' . strtolower($this->model->getPluralName());
+        $collection = 'store.' . strtolower($this->model->getPluralName());
         return DB::collection($collection);
     }
 
