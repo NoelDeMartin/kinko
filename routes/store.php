@@ -5,11 +5,12 @@ Route::middleware('api')->group(function () {
         Route::post('token', 'AccessTokenController@issueToken')->middleware('throttle');
     });
 
-    Route::namespace('\Kinko\Http\Controllers\Store\Api')
-        ->middleware('auth:api')
-        ->group(function () {
-            Route::any('/', 'GraphQLController');
-        });
+    Route::namespace('\Kinko\Http\Controllers\Store\Api')->group(function () {
+        // TODO rename this to "register" to comply with RFC 7591
+        Route::post('clients', 'ClientsController@store')->name('store.clients');
+
+        Route::any('/', 'GraphQLController')->middleware('auth:api');
+    });
 });
 
 Route::middleware(['web', 'auth'])->group(function () {
@@ -25,7 +26,3 @@ Route::middleware(['web', 'auth'])->group(function () {
     });
 });
 
-Route::post('token', [
-    'uses' => '\Laravel\Passport\Http\Controllers\AccessTokenController@issueToken',
-    'middleware' => 'throttle',
-]);

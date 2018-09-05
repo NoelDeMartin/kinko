@@ -9,10 +9,68 @@ use Kinko\Models\Passport\Client;
 use Kinko\Models\Passport\AuthCode;
 use Kinko\Models\Passport\AccessToken;
 use Kinko\Models\Passport\RefreshToken;
+use PHPUnit\Framework\Assert as PHPUnit;
+use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Foundation\Testing\TestResponse;
 
-class AuthorizationTests extends TestCase
+class OAuthTests extends TestCase
 {
-    public function test_code_authorization()
+    public function setUp()
+    {
+        parent::setUp();
+
+        TestResponse::macro('assertOAuthError', function ($error = '*', $message = null) {
+            $this->assertStatus(Response::HTTP_BAD_REQUEST);
+            $this->assertJsonStructure(['error']);
+            PHPUnit::assertTrue(str_is($error, $this->json('error')));
+
+            if (!is_null($message)) {
+                $this->assertJsonStructure(['error_description']);
+                PHPUnit::assertTrue(str_is($message, $this->json('error_description')));
+            }
+
+            return $this;
+        });
+    }
+
+    public function test_dynamic_client_registration()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function test_dynamic_client_registration_error()
+    {
+        $domain = $this->faker->domainName;
+        $homeUrl = 'http://' . $domain;
+        $callbackUrl = 'http://' . $domain . '/' . $this->faker->word;
+        $redirectUrl = 'http://' . $domain . '/' . $this->faker->word;
+
+        $response = $this->post('store/clients', [
+            'client_name' => $this->faker->sentence,
+            'client_uri' => $homeUrl,
+            'domain' => $domain,
+            'redirect_uris' => [$redirectUrl],
+            'description' => $this->faker->sentence,
+            'token_endpoint_auth_method' => 'client_secret_post',
+            'grant_types' => [
+                'authorization_code',
+            ],
+            'response_types' => [
+                'code',
+            ],
+            'schema' => file_get_contents(stubs_path('schema.graphql')),
+        ]);
+
+        $response->assertOAuthError(
+            'invalid_client_metadata',
+            'Non-public clients are not supported with dynamic client registration'
+        );
+    }
+
+    // TODO test other possible errors
+    // TODO review specification
+
+    public function test_authorization_code_grant()
     {
         $user = factory(User::class)->create();
         $client = factory(Client::class)->create();
@@ -32,6 +90,8 @@ class AuthorizationTests extends TestCase
 
         $response->assertSuccessful();
         $response->assertSessionHas('authRequest');
+
+        // TODO assert that form shows data about non-validated app (schema, etc.)
 
         // Post form to obtain code
         $response = $this->post('/store/authorize', $params);
