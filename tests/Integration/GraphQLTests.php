@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Integration;
 
 use Tests\TestCase;
 use Kinko\Models\User;
