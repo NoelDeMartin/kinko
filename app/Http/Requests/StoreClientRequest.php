@@ -6,7 +6,7 @@ use Illuminate\Validation\Rule;
 use Kinko\Http\Requests\Rules\Domain;
 use Kinko\Http\Requests\Rules\UrlDomain;
 use Illuminate\Foundation\Http\FormRequest;
-use Kinko\Http\Requests\Rules\ApplicationSchemaJson;
+use Kinko\Http\Requests\Rules\ApplicationSchema;
 use Kinko\Http\Requests\Concerns\AuthorizesRequests;
 
 class StoreClientRequest extends FormRequest
@@ -22,7 +22,7 @@ class StoreClientRequest extends FormRequest
     {
         return [
             'client_name' => 'required|string',
-            'client_uri' => ['required', new UrlDomain($this, 'domain')],
+            'client_uri' => [new UrlDomain($this, 'domain')],
             'logo_uri' => 'url',
             'description' => 'required|string',
             'domain' => ['required', new Domain],
@@ -32,9 +32,8 @@ class StoreClientRequest extends FormRequest
                 'required',
                 Rule::in(['none', 'client_secret_post', 'client_secret_basic']),
             ],
-            'grant_types' => 'required|array',
+            'grant_types' => 'array',
             'grant_types.*' => [
-                'required',
                 Rule::in([
                     'authorization_code',
                     'implicit',
@@ -45,9 +44,9 @@ class StoreClientRequest extends FormRequest
                     'urn:...',
                 ]),
             ],
-            'response_types' => 'required|array',
-            'response_types.*' => 'required|in:code,token',
-            // TODO validate schema .graphql
+            'response_types' => 'array',
+            'response_types.*' => 'in:code,token',
+            'schema' => ['required', new ApplicationSchema],
         ];
     }
 }

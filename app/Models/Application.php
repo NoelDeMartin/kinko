@@ -8,8 +8,11 @@ use Kinko\Database\MongoDB\Soukai\Model;
 class Application extends Model
 {
     protected $fillable = [
-        'name', 'description', 'domain', 'callback_url', 'redirect_url',
-        'schema', 'client_id',
+        'name', 'description', 'domain', 'logo_url', 'homepage_url',
+        'schema', 'client_id', 'validated',
+
+        // TODO remove legacy fields
+        'callback_url', 'redirect_url',
     ];
 
     protected $casts = [
