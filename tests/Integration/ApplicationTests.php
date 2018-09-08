@@ -52,6 +52,8 @@ class ApplicationTests extends TestCase
 
     public function test_register()
     {
+        // TODO remove this, since it has been replaced with Dynamic Client Registration
+
         $state = str_random();
         $user = factory(User::class)->create();
         $name = $this->faker->sentence;
