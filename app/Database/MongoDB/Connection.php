@@ -85,12 +85,12 @@ class Connection extends NonRelationalConnection
 
     public function selectOne($query, $bindings = [], $useReadPdo = true)
     {
-        // ignore $useReadPDO (forced by implementation, not interface)
+        //
     }
 
     public function select($query, $bindings = [], $useReadPdo = true)
     {
-        // ignore $useReadPDO (forced by implementation, not interface)
+        //
     }
 
     public function insert($query, $bindings = [])
