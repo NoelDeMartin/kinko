@@ -4,16 +4,16 @@ namespace Kinko\Http\Controllers\Store\Web;
 
 use Exception;
 use Kinko\Models\Application;
+use Kinko\Exceptions\ApiError;
 use GuzzleHttp\ClientInterface;
 use Kinko\Models\Passport\Client;
 use Kinko\Support\Facades\GraphQL;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Kinko\Http\Controllers\Controller;
+use Illuminate\Validation\ValidationException;
 use Kinko\Http\Requests\StoreApplicationRequest;
 use Kinko\Http\Requests\CreateApplicationRequest;
-use Kinko\Exceptions\ApiError;
-use Illuminate\Validation\ValidationException;
 
 class ApplicationsController extends Controller
 {

@@ -1,11 +1,9 @@
 <?php
 
 Route::middleware('api')->group(function () {
-    Route::namespace('\Laravel\Passport\Http\Controllers')->group(function () {
-        Route::post('token', 'AccessTokenController@issueToken')->middleware('throttle');
-    });
-
     Route::namespace('\Kinko\Http\Controllers\Store\Api')->group(function () {
+        Route::post('token', 'AccessTokenController@issueToken')->middleware('throttle');
+
         // TODO rename this to "register" to comply with RFC 7591
         Route::post('clients', 'ClientsController@store')->name('store.clients');
 
@@ -14,13 +12,12 @@ Route::middleware('api')->group(function () {
 });
 
 Route::middleware(['web', 'auth'])->group(function () {
-    Route::namespace('\Laravel\Passport\Http\Controllers')->group(function () {
-        Route::get('authorize', 'AuthorizationController@authorize');
-        Route::post('authorize', 'ApproveAuthorizationController@approve')->name('store.authorize.approve');
-        Route::delete('authorize', 'DenyAuthorizationController@deny')->name('store.authorize.deny');
-    });
-
     Route::namespace('\Kinko\Http\Controllers\Store\Web')->group(function () {
+        Route::get('authorize', 'AuthorizationController@create');
+        Route::post('authorize', 'AuthorizationController@approve')->name('store.authorize.approve');
+        Route::delete('authorize', 'AuthorizationController@deny')->name('store.authorize.deny');
+
+        // TODO remove this and incorporate validation into authorization
         Route::get('register', 'ApplicationsController@create');
         Route::post('register', 'ApplicationsController@store')->name('store.register');
     });

@@ -15,8 +15,9 @@ class RFC6749Tests extends OAuthTestCase
     {
         $user = factory(User::class)->create();
         $client = factory(Client::class)->create();
-        $application = factory(Application::class)->create(['client_id' => $client->id]);
         $state = str_random();
+
+        factory(Application::class)->create(['client_id' => $client->id]);
 
         $params = [
             'response_type' => 'code',
@@ -90,5 +91,45 @@ class RFC6749Tests extends OAuthTestCase
         $this->assertEquals($accessToken->id, $refreshToken->access_token_id);
         $this->assertFalse($refreshToken->revoked);
         $this->assertTrue($refreshToken->expires_at->isFuture());
+    }
+
+    public function test_authorization_code_grant_rejection()
+    {
+        $user = factory(User::class)->create();
+        $client = factory(Client::class)->create();
+        $state = str_random();
+
+        factory(Application::class)->create(['client_id' => $client->id]);
+
+        $params = [
+            'response_type' => 'code',
+            'client_id' => $client->id,
+            'redirect_uri' => $client->redirect,
+            'state' => $state,
+            // TODO scope
+        ];
+
+        // Open form to prepare session
+        $response = $this->login($user)->get('/store/authorize?' . http_build_query($params));
+
+        $response->assertSuccessful();
+
+        // Post form to obtain code
+        $response = $this->delete('/store/authorize', $params);
+
+        $response->assertRedirect();
+        $redirectLocation = $response->headers->get('Location');
+        $redirectUrl = substr($redirectLocation, 0, strpos($redirectLocation, '?'));
+        $redirectParams = [];
+        parse_str(
+            substr($redirectLocation, strpos($redirectLocation, '?') + 1),
+            $redirectParams
+        );
+
+        $this->assertEquals($client->redirect, $redirectUrl);
+        $this->assertArrayHasKey('state', $redirectParams);
+        $this->assertArrayHasKey('error', $redirectParams);
+        $this->assertEquals($state, $redirectParams['state']);
+        $this->assertEquals('access_denied', $redirectParams['error']);
     }
 }

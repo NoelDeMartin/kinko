@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "03b0c5a65b545c0892af4996d17b843b",
+    "content-hash": "f0db845e6976ac872bdd48bd91505058",
     "packages": [
         {
             "name": "defuse/php-encryption",
@@ -1250,16 +1250,16 @@
         },
         {
             "name": "league/oauth2-server",
-            "version": "7.1.1",
+            "version": "7.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/oauth2-server.git",
-                "reference": "2e47fa7fcad3b207cfbefa0a0e26af00445f3906"
+                "reference": "8184f771d43ea7305ddbb893d0daf6f0352ec5fd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/oauth2-server/zipball/2e47fa7fcad3b207cfbefa0a0e26af00445f3906",
-                "reference": "2e47fa7fcad3b207cfbefa0a0e26af00445f3906",
+                "url": "https://api.github.com/repos/thephpleague/oauth2-server/zipball/8184f771d43ea7305ddbb893d0daf6f0352ec5fd",
+                "reference": "8184f771d43ea7305ddbb893d0daf6f0352ec5fd",
                 "shasum": ""
             },
             "require": {
@@ -1316,7 +1316,7 @@
                 "secure",
                 "server"
             ],
-            "time": "2018-05-21T14:01:37+00:00"
+            "time": "2018-06-23T16:57:59+00:00"
         },
         {
             "name": "monolog/monolog",

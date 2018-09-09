@@ -12,7 +12,7 @@
         <form method="POST" action="{{ route('store.authorize.approve') }}">
             @csrf
 
-            <input type="hidden" name="state" value="{{ $request->state }}">
+            <input type="hidden" name="state" value="{{ $state }}">
             <input type="hidden" name="client_id" value="{{ $client->id }}">
             <button type="submit">{{ trans('store.authorization.approve') }}</button>
         </form>
@@ -21,7 +21,7 @@
             @csrf
             @method('DELETE')
 
-            <input type="hidden" name="state" value="{{ $request->state }}">
+            <input type="hidden" name="state" value="{{ $state }}">
             <input type="hidden" name="client_id" value="{{ $client->id }}">
             <button type="submit" class="secondary">{{ trans('store.authorization.deny') }}</button>
         </form>
