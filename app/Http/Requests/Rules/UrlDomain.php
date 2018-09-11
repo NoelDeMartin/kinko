@@ -26,7 +26,26 @@ class UrlDomain implements Rule
     public function passes($attribute, $value)
     {
         $parts = parse_url($value);
-        return isset($parts['host']) && $parts['host'] === $this->request->input($this->field);
+
+        if (!isset($parts['host'])) {
+            return false;
+        }
+
+        $urls = $this->request->input($this->field);
+
+        if (!is_array($urls)) {
+            $urls = [$urls];
+        }
+
+        foreach ($urls as $url) {
+            $urlParts = parse_url($url);
+
+            if (!isset($urlParts['host']) || $parts['host'] !== $urlParts['host']) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

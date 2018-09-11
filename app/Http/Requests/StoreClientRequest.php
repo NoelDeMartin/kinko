@@ -7,11 +7,12 @@ use Kinko\Http\Requests\Rules\Domain;
 use Kinko\Http\Requests\Rules\UrlDomain;
 use Illuminate\Foundation\Http\FormRequest;
 use Kinko\Http\Requests\Rules\ApplicationSchema;
+use Kinko\Http\Requests\Concerns\ThrowsOAuthErrors;
 use Kinko\Http\Requests\Concerns\AuthorizesRequests;
 
 class StoreClientRequest extends FormRequest
 {
-    use AuthorizesRequests;
+    use ThrowsOAuthErrors, AuthorizesRequests;
 
     /**
      * Get the validation rules that apply to the request.
@@ -22,12 +23,12 @@ class StoreClientRequest extends FormRequest
     {
         return [
             'client_name' => 'required|string',
-            'client_uri' => [new UrlDomain($this, 'domain')],
-            'logo_uri' => 'url',
-            'description' => 'required|string',
-            'domain' => ['required', new Domain],
+            'client_uri' => ['url', new UrlDomain($this, 'redirect_uris')],
+            'client_description' => 'required|string',
+            // TODO scope
+            'logo_uri' => 'url', // TODO validate valid url image
             'redirect_uris' => 'required|array',
-            'required_uris.*' => [new UrlDomain($this, 'domain')],
+            'required_uris.*' => ['url', new UrlDomain($this, 'redirect_uris')],
             'token_endpoint_auth_method' => [
                 'required',
                 Rule::in(['none', 'client_secret_post', 'client_secret_basic']),

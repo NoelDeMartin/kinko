@@ -2,9 +2,9 @@
 
 namespace Kinko\Http\Controllers\Store\Api;
 
-use Kinko\Models\Application;
+use Kinko\Models\Client;
 use Kinko\Exceptions\OAuthError;
-use Kinko\Models\Passport\Client;
+use Kinko\Support\Facades\GraphQL;
 use Kinko\Http\Controllers\Controller;
 use Kinko\Http\Requests\StoreClientRequest;
 
@@ -39,53 +39,41 @@ class ClientsController extends Controller
             );
         }
 
-        $client = Client::create([
-            'user_id' => null,
+        $clientData = [
             'name' => $request->input('client_name'),
-            'secret' => null,
-            'redirect' => $request->input('redirect_uris'),
-            'personal_access_client' => false,
-            'password_client' => false,
-            'revoked' => false,
-        ]);
-
-        $applicationData = [
-            'name' => $request->input('client_name'),
-            'description' => $request->input('description'),
-            'domain' => $request->input('domain'),
-            'schema' => $request->input('schema'),
-            'client_id' => $client->id,
-            'validated' => false,
+            'description' => $request->input('client_description'),
+            'redirect_uris' => $request->input('redirect_uris'),
+            'schema' => GraphQL::parseGraphQLSchema($request->input('schema')),
         ];
 
         if ($request->has('logo_uri')) {
-            $applicationData['logo_url'] = $request->input('logo_uri');
+            $clientData['logo_url'] = $request->input('logo_uri');
         }
 
         if ($request->has('client_uri')) {
-            $applicationData['homepage_url'] = $request->input('client_uri');
+            $clientData['homepage_url'] = $request->input('client_uri');
         }
 
-        $application = Application::create($applicationData);
+        $client = Client::create($clientData);
 
         $responseData = [
             'client_id' => $client->id,
             'client_name' => $client->name,
-            'description' => $application->description,
-            'domain' => $application->domain,
-            'redirect_uris' => [$client->redirect],
+            'client_description' => $client->description,
+            // TODO scope
+            'redirect_uris' => $client->redirect_uris,
             'token_endpoint_auth_method' => 'none',
             'grant_types' => ['authorization_code'],
             'response_type' => ['code'],
-            'schema' => '', // TODO json
+            'schema' => $client->schema,
         ];
 
         if ($request->has('logo_uri')) {
-            $responseData['logo_uri'] = $application->logo_url;
+            $responseData['logo_uri'] = $client->logo_url;
         }
 
         if ($request->has('client_uri')) {
-            $responseData['client_uri'] = $application->homepage_url;
+            $responseData['client_uri'] = $client->homepage_url;
         }
 
         return response()

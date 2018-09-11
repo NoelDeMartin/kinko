@@ -24,8 +24,8 @@ class StoreApplicationRequest extends FormRequest
             'name'         => 'required|string|unique:applications',
             'description'  => 'required|string',
             'domain'       => ['required', new Domain, 'unique:applications'],
-            'callback_url' => ['required', 'secure_url', new UrlDomain($this, 'domain')],
-            'redirect_url' => ['required', 'secure_url', new UrlDomain($this, 'domain')],
+            'callback_url' => ['required', 'secure_url'],
+            'redirect_url' => ['required', 'secure_url'],
             'schema'       => ['required', new ApplicationSchemaJson],
         ];
     }

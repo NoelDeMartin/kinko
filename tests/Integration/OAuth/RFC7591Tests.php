@@ -2,8 +2,7 @@
 
 namespace Tests\Integration\OAuth;
 
-use Kinko\Models\Application;
-use Kinko\Models\Passport\Client;
+use Kinko\Models\Client;
 
 class RFC7591Tests extends OAuthTestCase
 {
@@ -11,15 +10,13 @@ class RFC7591Tests extends OAuthTestCase
     {
         $domain = $this->faker->domainName;
         $homeUrl = 'http://' . $domain;
-        $callbackUrl = 'http://' . $domain . '/' . $this->faker->word;
         $redirectUrl = 'http://' . $domain . '/' . $this->faker->word;
 
         $response = $this->post('store/clients', [
             'client_name' => $this->faker->sentence,
             'client_uri' => $homeUrl,
-            'domain' => $domain,
+            'client_description' => $this->faker->sentence,
             'redirect_uris' => [$redirectUrl],
-            'description' => $this->faker->sentence,
             'token_endpoint_auth_method' => 'none',
             'grant_types' => [
                 'authorization_code',
@@ -30,8 +27,9 @@ class RFC7591Tests extends OAuthTestCase
             'schema' => file_get_contents(stubs_path('schema.graphql')),
         ]);
 
+        $response->assertSuccessful();
+
         $this->assertEquals(1, Client::count());
-        $this->assertEquals(1, Application::count());
 
         // TODO add more assertions
     }
@@ -40,15 +38,13 @@ class RFC7591Tests extends OAuthTestCase
     {
         $domain = $this->faker->domainName;
         $homeUrl = 'http://' . $domain;
-        $callbackUrl = 'http://' . $domain . '/' . $this->faker->word;
         $redirectUrl = 'http://' . $domain . '/' . $this->faker->word;
 
         $response = $this->post('store/clients', [
             'client_name' => $this->faker->sentence,
             'client_uri' => $homeUrl,
-            'domain' => $domain,
+            'client_description' => $this->faker->sentence,
             'redirect_uris' => [$redirectUrl],
-            'description' => $this->faker->sentence,
             'token_endpoint_auth_method' => 'client_secret_post',
             'grant_types' => [
                 'authorization_code',
