@@ -16,10 +16,6 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('authorize', 'AuthorizationController@create');
         Route::post('authorize', 'AuthorizationController@approve')->name('store.authorize.approve');
         Route::delete('authorize', 'AuthorizationController@deny')->name('store.authorize.deny');
-
-        // TODO remove this and incorporate validation into authorization
-        Route::get('register', 'ApplicationsController@create');
-        Route::post('register', 'ApplicationsController@store')->name('store.register');
     });
 });
 

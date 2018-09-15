@@ -1,10 +1,10 @@
 <?php
 
-namespace Kinko\Models\Passport;
+namespace Kinko\Models;
 
 use Kinko\Database\MongoDB\Soukai\Model;
 
-class AuthCode extends Model
+class AccessToken extends Model
 {
     protected $fillable = [
         'id', 'user_id', 'client_id',
@@ -12,7 +12,7 @@ class AuthCode extends Model
     ];
 
     protected $dates = [
-        'expires_at',
+        'expires_at', 'created_at', 'updated_at',
     ];
 
     protected $keys = [

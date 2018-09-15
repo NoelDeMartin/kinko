@@ -1,6 +1,6 @@
 <?php
 
-namespace Kinko\Models\Passport;
+namespace Kinko\Models;
 
 use Kinko\Database\MongoDB\Soukai\Model;
 

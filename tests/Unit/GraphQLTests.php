@@ -5,8 +5,8 @@ namespace Tests\Unit;
 use Tests\TestCase;
 use GraphQL\Error\Error;
 use GraphQL\Language\Parser;
-use Kinko\GraphQL\SchemaBuilder;
 use GraphQL\Utils\BuildSchema;
+use Kinko\GraphQL\SchemaBuilder;
 use Kinko\Support\Facades\GraphQL;
 
 class GraphQLTests extends TestCase

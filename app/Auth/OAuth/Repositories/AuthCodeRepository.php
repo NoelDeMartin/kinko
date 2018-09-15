@@ -1,21 +1,30 @@
 <?php
 
-namespace Kinko\Auth\Passport;
+namespace Kinko\Auth\OAuth\Repositories;
 
+use Kinko\Models\AuthCode;
 use Kinko\Support\Facades\MongoDB;
-use Kinko\Models\Passport\AuthCode;
+use Kinko\Auth\OAuth\Entities\AuthCode as AuthCodeEntity;
 use League\OAuth2\Server\Entities\AuthCodeEntityInterface;
-use Laravel\Passport\Bridge\AuthCodeRepository as BaseAuthCodeRepository;
+use League\OAuth2\Server\Repositories\AuthCodeRepositoryInterface;
+use Kinko\Auth\OAuth\Repositories\Concerns\FormatsScopesForStorage;
 use League\OAuth2\Server\Exception\UniqueTokenIdentifierConstraintViolationException;
 
-class AuthCodeRepository extends BaseAuthCodeRepository
+class AuthCodeRepository implements AuthCodeRepositoryInterface
 {
+    use FormatsScopesForStorage;
+
+    public function getNewAuthCode()
+    {
+        return new AuthCodeEntity;
+    }
+
     public function persistNewAuthCode(AuthCodeEntityInterface $authCodeEntity)
     {
         $codeId = $authCodeEntity->getIdentifier();
 
         if (AuthCode::where('id', $codeId)->count() !== 0) {
-            throw new UniqueTokenIdentifierConstraintViolationException;
+            throw new UniqueTokenIdentifierConstraintViolationException();
         }
 
         AuthCode::create([

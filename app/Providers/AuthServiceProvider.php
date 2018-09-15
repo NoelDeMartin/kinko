@@ -2,20 +2,18 @@
 
 namespace Kinko\Providers;
 
-use Laravel\Passport\Passport;
-use Kinko\Models\Passport\Client;
+use DateInterval;
 use Kinko\Auth\MongoUserProvider;
-use Kinko\Models\Passport\AuthCode;
+use League\OAuth2\Server\CryptKey;
 use Illuminate\Support\Facades\Auth;
-use Kinko\Models\Passport\AccessToken;
-use Kinko\Auth\Passport\ClientRepository;
-use Kinko\Auth\Passport\AuthCodeRepository;
-use Kinko\Models\Passport\PersonalAccessClient;
-use Kinko\Auth\Passport\RefreshTokenRepository;
-use Laravel\Passport\ClientRepository as PassportClientRepository;
-use Laravel\Passport\Bridge\AuthCodeRepository as PassportAuthCodeRepository;
+use Kinko\Auth\OAuth\Grants\AuthCodeGrant;
+use League\OAuth2\Server\AuthorizationServer;
+use Kinko\Auth\OAuth\Repositories\ScopeRepository;
+use Kinko\Auth\OAuth\Repositories\ClientRepository;
+use Kinko\Auth\OAuth\Repositories\AuthCodeRepository;
+use Kinko\Auth\OAuth\Repositories\AccessTokenRepository;
+use Kinko\Auth\OAuth\Repositories\RefreshTokenRepository;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Laravel\Passport\Bridge\RefreshTokenRepository as PassportRefreshTokenRepository;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -49,14 +47,24 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        Passport::ignoreMigrations();
-        Passport::useTokenModel(AccessToken::class);
-        Passport::useClientModel(Client::class);
-        Passport::useAuthCodeModel(AuthCode::class);
-        Passport::usePersonalAccessClientModel(PersonalAccessClient::class);
+        $this->app->singleton(AuthorizationServer::class, function () {
+            $server = new AuthorizationServer(
+                new ClientRepository,
+                new AccessTokenRepository,
+                new ScopeRepository,
+                new CryptKey('file://' . storage_path('oauth-private.key'), null, false),
+                $this->app['encrypter']->getKey()
+            );
 
-        $this->app->bind(PassportClientRepository::class, ClientRepository::class);
-        $this->app->bind(PassportAuthCodeRepository::class, AuthCodeRepository::class);
-        $this->app->bind(PassportRefreshTokenRepository::class, RefreshTokenRepository::class);
+            $authCodeGrant = new AuthCodeGrant(
+                new AuthCodeRepository,
+                new RefreshTokenRepository,
+                new DateInterval('PT10M')
+            );
+
+            $server->enableGrantType($authCodeGrant, new DateInterval('P1Y'));
+
+            return $server;
+        });
     }
 }

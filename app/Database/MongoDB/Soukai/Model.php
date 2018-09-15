@@ -81,6 +81,11 @@ class Model extends NonRelationalModel
         return Str::snake(class_basename($this)).'_id';
     }
 
+    public function getKey()
+    {
+        return MongoDB::key(parent::getKey());
+    }
+
     public function getCasts()
     {
         $keyCasts = [];

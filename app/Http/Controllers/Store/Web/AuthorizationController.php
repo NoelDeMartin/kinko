@@ -2,10 +2,10 @@
 
 namespace Kinko\Http\Controllers\Store\Web;
 
+use Kinko\Models\Client;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use Laravel\Passport\Passport;
-use Kinko\Models\Passport\Client;
 use Laravel\Passport\Bridge\User;
 use Kinko\Http\Controllers\Controller;
 use Zend\Diactoros\Response as Psr7Response;
@@ -13,7 +13,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use League\OAuth2\Server\AuthorizationServer;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Laravel\Passport\Http\Controllers\HandlesOAuthErrors;
-use Laravel\Passport\Http\Controllers\RetrievesAuthRequestFromSession;
+use Kinko\Http\Controllers\Store\Web\Concerns\RetrievesAuthRequestFromSession;
 
 class AuthorizationController extends Controller
 {
@@ -27,45 +27,49 @@ class AuthorizationController extends Controller
     }
 
     public function create(ServerRequestInterface $psrRequest, Request $request) {
-        return $this->withErrorHandling(function () use ($psrRequest, $request) {
-            $authRequest = $this->server->validateAuthorizationRequest($psrRequest);
+        // TODO refactor error handling and display (see https://tools.ietf.org/html/rfc6749#section-4.1.2.1)
+        $authRequest = $this->server->validateAuthorizationRequest($psrRequest);
 
-            $scopes = $this->parseScopes($authRequest);
+        $client = Client::find($authRequest->getClient()->getIdentifier());
+        $user = $request->user();
+        $token = $client
+            ->tokens()
+            ->where('user_id', $user->id)
+            ->where('revoked', false)
+            ->where('expires_at', '>', now())
+            ->latest('expires_at')
+            ->first();
 
-            $client = Client::find($authRequest->getClient()->getIdentifier());
-            $user = $request->user();
-            $token = $client
-                ->tokens()
-                ->whereUserId($user->getKey())
-                ->whereRevoked(false)
-                ->where('expires_at', '>', now())
-                ->latest('expires_at')
-                ->first();
+        if (!is_null($token) && $token->scopes === collect($scopes)->pluck('id')->all()) {
+            return $this->approveRequest($authRequest, $user);
+        }
 
-            if (!is_null($token) && $token->scopes === collect($scopes)->pluck('id')->all()) {
-                return $this->approveRequest($authRequest, $user);
-            }
+        $request->session()->put('authRequest', $authRequest);
 
-            $request->session()->put('authRequest', $authRequest);
-
-            return view('store.authorize', [
-                'client' => $client,
-                'user' => $user,
-                'scopes' => $scopes,
-                'state' => $request->state,
-            ]);
-        });
+        return view('store.authorize', [
+            'client' => $client,
+            'user' => $user,
+            'state' => $request->state,
+        ]);
     }
 
     public function approve(Request $request)
     {
-        return $this->withErrorHandling(function () use ($request) {
-            $authRequest = $this->getAuthRequestFromSession($request);
+        // TODO refactor error handling and display (see https://tools.ietf.org/html/rfc6749#section-4.1.2.1)
+        $authRequest = $this->getAuthRequestFromSession($request);
 
-            return $this->convertResponse(
-                $this->server->completeAuthorizationRequest($authRequest, new Psr7Response)
-            );
-        });
+        $response = $this->server->completeAuthorizationRequest($authRequest, new Psr7Response);
+
+        $client = $authRequest->getClient();
+
+        if (!$client->validated) {
+            $client->update([
+                'validated' => true,
+                'user_id' => $request->user()->id,
+            ]);
+        }
+
+        return $this->convertResponse($response);
     }
 
     public function deny(Request $request)
@@ -85,18 +89,9 @@ class AuthorizationController extends Controller
         );
     }
 
-    protected function parseScopes($authRequest)
-    {
-        return Passport::scopesFor(
-            collect($authRequest->getScopes())->map(function ($scope) {
-                return $scope->getIdentifier();
-            })->unique()->all()
-        );
-    }
-
     protected function approveRequest($authRequest, $user)
     {
-        $authRequest->setUser(new User($user->getKey()));
+        $authRequest->setUser($user);
 
         $authRequest->setAuthorizationApproved(true);
 
