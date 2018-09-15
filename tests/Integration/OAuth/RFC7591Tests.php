@@ -12,7 +12,7 @@ class RFC7591Tests extends OAuthTestCase
         $homeUrl = 'http://' . $domain;
         $redirectUrl = 'http://' . $domain . '/' . $this->faker->word;
 
-        $response = $this->post('store/clients', [
+        $response = $this->post('store/register', [
             'client_name' => $this->faker->sentence,
             'client_uri' => $homeUrl,
             'client_description' => $this->faker->sentence,
@@ -40,7 +40,7 @@ class RFC7591Tests extends OAuthTestCase
         $homeUrl = 'http://' . $domain;
         $redirectUrl = 'http://' . $domain . '/' . $this->faker->word;
 
-        $response = $this->post('store/clients', [
+        $response = $this->post('store/register', [
             'client_name' => $this->faker->sentence,
             'client_uri' => $homeUrl,
             'client_description' => $this->faker->sentence,

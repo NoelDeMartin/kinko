@@ -25,9 +25,6 @@ class CreatePassportCollections extends Migration
         Schema::create('clients', function (Blueprint $collection) {
             $collection->field('user_id')->index();
         });
-        Schema::create('personal_access_clients', function (Blueprint $collection) {
-            $collection->field('client_id')->index();
-        });
         Schema::create('refresh_tokens', function (Blueprint $collection) {
             $collection->field('access_token_id')->index();
         });
@@ -44,6 +41,5 @@ class CreatePassportCollections extends Migration
         Schema::dropIfExists('auth_codes');
         Schema::dropIfExists('access_tokens');
         Schema::dropIfExists('refresh_tokens');
-        Schema::dropIfExists('personal_access_clients');
     }
 }

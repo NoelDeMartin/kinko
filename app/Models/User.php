@@ -10,15 +10,24 @@ use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 
 class User extends Model implements AuthenticatableContract, UserEntityInterface
 {
+    static function newApiToken()
+    {
+        do {
+            $token = str_random();
+        } while (static::where('api_token', $token)->count() > 0);
+
+        return $token;
+    }
+
     use HasApiTokens;
     use Authenticatable;
 
     protected $fillable = [
-        'first_name', 'last_name', 'email', 'password',
+        'first_name', 'last_name', 'email', 'password', 'api_token',
     ];
 
     protected $hidden = [
-        'password',
+        'password', 'api_token',
     ];
 
     public function getIdentifier()

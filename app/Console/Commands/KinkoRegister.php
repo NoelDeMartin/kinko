@@ -62,7 +62,6 @@ class KinkoRegister extends Command
             }
         }
 
-
         $this->line('First Name: ' . $firstName);
         $this->line('Last Name: ' . $lastName);
         $this->line('Email: ' . $email);
@@ -73,6 +72,7 @@ class KinkoRegister extends Command
                 'last_name'  => $lastName,
                 'email'      => $email,
                 'password'   => bcrypt($password),
+                'api_token'  => User::newApiToken(),
             ]);
 
             $this->info('Created user with id ' . $user->_id);

@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @push('meta')
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="api-token" content="{{ auth()->user()->api_token }}">
 @endpush
 
 @push('styles')

@@ -68,7 +68,6 @@ export default Vue.extend({
         if (!Laravel.serverSide) {
             Promise.all([
                 ApplicationsApi.index().then(applications => {
-                    console.log(applications);
                     this.applications = applications;
                 }),
                 CollectionsApi.index().then(collections => {

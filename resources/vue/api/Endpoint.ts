@@ -15,8 +15,7 @@ export default class Endpoint {
         const options: RequestInit = {
             method,
             headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': this.getCsrfToken(),
+                Authorization: 'Bearer ' + this.getApiToken(),
                 ...headers,
             },
             credentials: 'same-origin',
@@ -46,13 +45,13 @@ export default class Endpoint {
         return await (isJson ? response.json() : response.text());
     }
 
-    private getCsrfToken(): string {
-        const token = <HTMLMetaElement> document.head.querySelector('meta[name="csrf-token"]');
+    private getApiToken(): string {
+        const token = <HTMLMetaElement> document.head.querySelector('meta[name="api-token"]');
 
         if (token) {
             return token.content;
         } else {
-            console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
+            console.error('Api token not found');
             return '';
         }
     }

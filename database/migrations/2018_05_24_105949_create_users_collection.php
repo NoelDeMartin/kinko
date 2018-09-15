@@ -15,6 +15,7 @@ class CreateUsersCollection extends Migration
     {
         Schema::create('users', function (Blueprint $collection) {
             $collection->field('email')->unique();
+            $collection->field('api_token')->unique();
         });
     }
 
