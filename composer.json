@@ -11,6 +11,7 @@
         "laravel/framework": "5.7.*",
         "laravel/tinker": "^1.0",
         "league/oauth2-server": "^7.2",
+        "phpseclib/phpseclib": "^2.0",
         "symfony/psr-http-message-bridge": "^1.0",
         "webonyx/graphql-php": "^0.12.0",
         "zendframework/zend-diactoros": "^1.8"
