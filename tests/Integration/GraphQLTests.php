@@ -4,25 +4,27 @@ namespace Tests\Integration;
 
 use Tests\TestCase;
 use Kinko\Models\User;
-use Kinko\Models\Application;
+use Kinko\Models\Client;
 use Illuminate\Http\Response;
+use Kinko\Models\AccessToken;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Kinko\Support\Facades\MongoDB;
-use Kinko\Models\Passport\Client;
+use League\OAuth2\Server\CryptKey;
+use Kinko\Auth\OAuth\Entities\AccessToken as AccessTokenEntity;
 
 class GraphQLTests extends TestCase
 {
     public function test_require_login()
     {
-        $response = $this->graphql('{ping}');
+        $response = $this->postJson('/store', ['query' => '{ping}']);
 
-        $response->assertStatus(Response::HTTP_UNAUTHORIZED);
+        $response->assertStatus(500);
     }
 
     public function test_introspection()
     {
-        $response = $this->login()->graphql('{__schema{types{name}}}');
+        $response = $this->graphql('{__schema{types{name}}}');
 
         $response->assertSuccessful();
         $response->assertJsonStructure(['data' => ['__schema' => ['types' => []]]]);
@@ -33,7 +35,9 @@ class GraphQLTests extends TestCase
 
     public function test_ping()
     {
-        $response = $this->login()->graphql('{ping}');
+        $this->withoutExceptionHandling();
+
+        $response = $this->graphql('{ping}');
 
         $response->assertSuccessful();
         $response->assertJsonStructure(['data' => ['ping']]);
@@ -46,7 +50,7 @@ class GraphQLTests extends TestCase
         $tasksCount = random_int(5, 10);
         $this->createTasks($tasksCount);
 
-        $response = $this->login()->graphql('{tasks: getTasks{id}}');
+        $response = $this->graphql('{tasks: getTasks{id}}');
 
         $response->assertSuccessful();
         $response->assertJsonStructure(['data' => ['tasks']]);
@@ -58,7 +62,7 @@ class GraphQLTests extends TestCase
     {
         $task = $this->createTasks(random_int(5, 10))->random();
 
-        $response = $this->login()->graphql(
+        $response = $this->graphql(
             "{
                 task: getTask(id: \"{$task->id}\") {
                     id,
@@ -88,7 +92,7 @@ class GraphQLTests extends TestCase
                 ->update(compact('name'));
         }
 
-        $response = $this->login()->graphql(
+        $response = $this->graphql(
             "{
                 tasks: getTasks(filter: {
                     field: \"name\",
@@ -124,7 +128,7 @@ class GraphQLTests extends TestCase
             $this->createTasks(1, ['name' => 'a', 'description' => 'b']),
         ]);
 
-        $response = $this->login()->graphql(
+        $response = $this->graphql(
             "{
                 tasks: getTasks(filter: {
                     AND: [
@@ -174,7 +178,7 @@ class GraphQLTests extends TestCase
             $this->createTasks(1, ['name' => 'c']),
         ])->reverse()->values();
 
-        $response = $this->login()->graphql(
+        $response = $this->graphql(
             "{
                 tasks: getTasks(orderBy: {
                     field: \"name\",
@@ -209,7 +213,7 @@ class GraphQLTests extends TestCase
             $this->createTasks(1, ['name' => 'c', 'description' => 'c']),
         ])->reverse()->values();
 
-        $response = $this->login()->graphql(
+        $response = $this->graphql(
             "{
                 tasks: getTasks(orderBy: {
                     AND: [
@@ -247,7 +251,7 @@ class GraphQLTests extends TestCase
         $tasks = $this->createTasks(random_int(5, 10));
         $limit = intval($tasks->count() / 2);
 
-        $response = $this->login()->graphql(
+        $response = $this->graphql(
             "{
                 tasks: getTasks(limit: {$limit}) {
                     id,
@@ -275,7 +279,7 @@ class GraphQLTests extends TestCase
         $tasks = $this->createTasks(random_int(5, 10));
         $offset = intval($tasks->count() / 2);
 
-        $response = $this->login()->graphql(
+        $response = $this->graphql(
             "{
                 tasks: getTasks(offset: {$offset}) {
                     id,
@@ -306,7 +310,7 @@ class GraphQLTests extends TestCase
         $now = now();
         Carbon::setTestNow($now);
 
-        $response = $this->login($user)->graphql(
+        $response = $this->graphql(
             "mutation {
                 task: createTask(
                     name: \"$name\",
@@ -319,7 +323,8 @@ class GraphQLTests extends TestCase
                     created_at,
                     updated_at
                 }
-            }"
+            }",
+            $user
         );
 
         $response->assertSuccessful();
@@ -347,7 +352,7 @@ class GraphQLTests extends TestCase
         $later = $now->copy()->addDay();
         Carbon::setTestNow($later);
 
-        $response = $this->login()->graphql(
+        $response = $this->graphql(
             "mutation {
                 task: updateTask(
                     id: \"$id\",
@@ -389,7 +394,7 @@ class GraphQLTests extends TestCase
             'name' => $originalName,
         ]);
 
-        $response = $this->login()->graphql(
+        $response = $this->graphql(
             "mutation {
                 count: updateTasks(
                     filter: {
@@ -439,7 +444,7 @@ class GraphQLTests extends TestCase
             'name' => $originalName,
         ]);
 
-        $response = $this->login()->graphql(
+        $response = $this->graphql(
             "mutation {
                 tasks: updateTasksAndReturnObjects(
                     filter: {
@@ -486,7 +491,7 @@ class GraphQLTests extends TestCase
             'updated_at' => MongoDB::date($now),
         ]);
 
-        $response = $this->login()->graphql(
+        $response = $this->graphql(
             "mutation {
                 result: deleteTask(id: \"$id\")
             }"
@@ -508,7 +513,7 @@ class GraphQLTests extends TestCase
             'name' => $name,
         ]);
 
-        $response = $this->login()->graphql(
+        $response = $this->graphql(
             "mutation {
                 count: deleteTasks(
                     filter: {
@@ -542,7 +547,7 @@ class GraphQLTests extends TestCase
             'name' => $name,
         ]);
 
-        $response = $this->login()->graphql(
+        $response = $this->graphql(
             "mutation {
                 ids: deleteTasksAndReturnIds(
                     filter: {
@@ -568,7 +573,7 @@ class GraphQLTests extends TestCase
         $id = str_random();
         $name = $this->faker->sentence;
 
-        $response = $this->login()->graphql("mutation {
+        $response = $this->graphql("mutation {
             createTask(
                 id: \"$id\",
                 name: \"$name\",
@@ -581,25 +586,32 @@ class GraphQLTests extends TestCase
         $response->assertGraphQLError('Unknown argument "id" on field "createTask" of type "Mutation".');
     }
 
-    public function login($user = null)
+    private function graphql($query, $user = null)
     {
-        $client = factory(Client::class)->create();
-        $application = factory(Application::class)->create([
+        $user = $user ?? factory(User::class)->create();
+
+        $client = factory(Client::class)->create([
+            'user_id' => $user->id,
+            'validated' => true,
             'schema' => load_stub('schema.json'),
+        ]);
+
+        $accessToken = factory(AccessToken::class)->create([
+            'user_id' => $user->id,
             'client_id' => $client->id,
         ]);
 
-        parent::login($user);
+        $OAuthAccessToken = new AccessTokenEntity($user->id);
+        $OAuthAccessToken->setClient($client);
+        $OAuthAccessToken->setExpiryDateTime(now()->addMonth());
+        $OAuthAccessToken->setIdentifier($accessToken->id);
 
-        $token = auth()->user()->token();
-        $token->shouldReceive('getAttribute')->with('client')->andReturn($client);
+        $privateKey = new CryptKey('file://' . storage_path('oauth-private.key'), null, false);
+        $token = (string) $OAuthAccessToken->convertToJWT($privateKey);
 
-        return $this;
-    }
-
-    private function graphql($query)
-    {
-        return $this->postJson('/store', compact('query'));
+        return $this->postJson('/store', compact('query'), [
+            'Authorization' => 'Bearer ' . $token,
+        ]);
     }
 
     private function createTasks($count = 1, $attributes = [])

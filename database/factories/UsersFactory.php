@@ -9,5 +9,6 @@ $factory->define(User::class, function (Faker $faker) {
         'last_name'  => $faker->lastName(),
         'email'      => $faker->email,
         'password'   => bcrypt('secret'),
+        'api_token'  => str_random(),
     ];
 });

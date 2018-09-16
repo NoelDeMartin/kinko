@@ -86,7 +86,6 @@ class RFC6749Tests extends OAuthTestCase
 
     public function test_code_authorization_rejection()
     {
-        $user = factory(User::class)->create();
         $client = factory(Client::class)->create([
             'user_id' => null,
             'validated' => false,
@@ -101,7 +100,7 @@ class RFC6749Tests extends OAuthTestCase
         ];
 
         // Open form to prepare session
-        $response = $this->login($user)->get('/store/authorize?' . http_build_query($params));
+        $response = $this->login()->get('/store/authorize?' . http_build_query($params));
 
         $response->assertSuccessful();
         $response->assertSessionHas('authRequest');

@@ -55,6 +55,10 @@ class Builder extends NonRelationalBuilder
             throw new InvalidArgumentException('Operation not implemented for MongoDB.');
         }
 
+        if (starts_with($field, $this->from . '.')) {
+            $field = substr($field, strlen($this->from . '.'));
+        }
+
         $type = $not ? 'NotIn' : 'In';
 
         $this->wheres[] = compact('type', 'field', 'values', 'boolean');

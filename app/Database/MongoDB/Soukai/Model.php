@@ -12,6 +12,7 @@ use Kinko\Support\Facades\MongoDB;
 use Kinko\Database\Soukai\NonRelationalModel;
 use Kinko\Database\MongoDB\Soukai\Concerns\HasKeys;
 use Kinko\Database\MongoDB\Soukai\Relations\HasOne;
+use Kinko\Database\MongoDB\Soukai\Relations\BelongsTo;
 use Kinko\Database\MongoDB\Query\Builder as QueryBuilder;
 use Kinko\Database\MongoDB\Soukai\Builder as SoukaiBuilder;
 
@@ -97,6 +98,15 @@ class Model extends NonRelationalModel
         return array_merge($keyCasts, parent::getCasts());
     }
 
+    public function belongsTo($related, $foreignKey = null, $ownerKey = null, $relation = null)
+    {
+        if (is_null($foreignKey)) {
+            $foreignKey = $this->newRelatedInstance($related)->getForeignKey();
+        }
+
+        return parent::belongsTo($related, $foreignKey, $ownerKey, $relation);
+    }
+
     protected function newHasOne(
         EloquentBuilder $query,
         EloquentModel $parent,
@@ -111,6 +121,23 @@ class Model extends NonRelationalModel
             throw new InvalidArgumentException('hasOne model must be instance of ' . Model::class);
         }
         return new HasOne($query, $parent, $foreignKey, $localKey);
+    }
+
+    protected function newBelongsTo(
+        EloquentBuilder $query,
+        EloquentModel $child,
+        $foreignKey,
+        $ownerKey,
+        $relation
+    )
+    {
+        if (!$query instanceof Builder) {
+            throw new InvalidArgumentException('belongsTo query must be instance of ' . Builder::class);
+        }
+        if (!$child instanceof Model) {
+            throw new InvalidArgumentException('belongsTo model must be instance of ' . Model::class);
+        }
+        return new BelongsTo($query, $child, $foreignKey, $ownerKey, $relation);
     }
 
     protected function castAttribute($key, $value)

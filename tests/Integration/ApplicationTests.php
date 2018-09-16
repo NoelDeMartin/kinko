@@ -14,6 +14,7 @@ class ApplicationTests extends TestCase
 
     public function test_index()
     {
+        $user = factory(User::class)->create();
         $applications = collect();
         $clients = factory(Client::class, $this->faker->numberBetween(10, 20))
             ->create()
@@ -21,7 +22,9 @@ class ApplicationTests extends TestCase
                 $applications->push(factory(Application::class)->create(['client_id' => $client->id]));
             });
 
-        $response = $this->login()->get('/api/applications');
+        $response = $this->get('/api/applications', [
+            'Authorization' => 'Bearer ' . $user->api_token,
+        ]);
 
         $response->assertSuccessful();
 

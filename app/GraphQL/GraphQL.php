@@ -11,7 +11,7 @@ use GraphQL\Server\StandardServer;
 
 use Illuminate\Support\Facades\App;
 
-use Kinko\Models\Application;
+use Kinko\Models\Client;
 
 class GraphQL
 {
@@ -41,9 +41,9 @@ class GraphQL
         return $schemaDefinition;
     }
 
-    public function query(Application $application, ServerRequestInterface $request)
+    public function query(Client $client, ServerRequestInterface $request)
     {
-        $ast = AST::fromArray($application->schema);
+        $ast = AST::fromArray($client->schema);
         $databaseProvider = App::make(GraphQLDatabaseProvider::class);
         $schema = new Schema($ast, $databaseProvider);
         $server = new StandardServer([

@@ -3,15 +3,19 @@
 namespace Tests\Integration;
 
 use Tests\TestCase;
+use Kinko\Models\User;
 use Kinko\Models\Collection;
 
 class CollectionTests extends TestCase
 {
     public function test_index()
     {
+        $user = factory(User::class)->create();
         $collections = factory(Collection::class, $this->faker->numberBetween(10, 20))->create();
 
-        $response = $this->login()->get('/api/collections');
+        $response = $this->get('/api/collections', [
+            'Authorization' => 'Bearer ' . $user->api_token,
+        ]);
 
         $response->assertSuccessful();
 

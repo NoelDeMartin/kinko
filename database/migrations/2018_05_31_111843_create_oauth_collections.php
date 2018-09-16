@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Migrations\Migration;
 use Kinko\Database\Schema\NonRelationalBlueprint as Blueprint;
 
-class CreatePassportCollections extends Migration
+class CreateOAuthCollections extends Migration
 {
     /**
      * Run the migrations.

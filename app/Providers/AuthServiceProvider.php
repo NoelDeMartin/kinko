@@ -3,9 +3,11 @@
 namespace Kinko\Providers;
 
 use DateInterval;
+use Laravel\Passport\Passport;
 use Kinko\Auth\MongoUserProvider;
 use League\OAuth2\Server\CryptKey;
 use Illuminate\Support\Facades\Auth;
+use League\OAuth2\Server\ResourceServer;
 use Kinko\Auth\OAuth\Grants\AuthCodeGrant;
 use League\OAuth2\Server\AuthorizationServer;
 use Kinko\Auth\OAuth\Repositories\ScopeRepository;
@@ -47,6 +49,8 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        Passport::ignoreMigrations();
+
         $this->app->singleton(AuthorizationServer::class, function () {
             $server = new AuthorizationServer(
                 new ClientRepository,
@@ -65,6 +69,13 @@ class AuthServiceProvider extends ServiceProvider
             $server->enableGrantType($authCodeGrant, new DateInterval('P1Y'));
 
             return $server;
+        });
+
+        $this->app->singleton(ResourceServer::class, function () {
+            return new ResourceServer(
+                new AccessTokenRepository,
+                new CryptKey('file://' . storage_path('oauth-public.key'), null, false)
+            );
         });
     }
 }
