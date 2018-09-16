@@ -3,7 +3,6 @@
 namespace Kinko\Providers;
 
 use DateInterval;
-use Laravel\Passport\Passport;
 use Kinko\Auth\MongoUserProvider;
 use League\OAuth2\Server\CryptKey;
 use Illuminate\Support\Facades\Auth;
@@ -49,8 +48,6 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        Passport::ignoreMigrations();
-
         $this->app->singleton(AuthorizationServer::class, function () {
             $server = new AuthorizationServer(
                 new ClientRepository,

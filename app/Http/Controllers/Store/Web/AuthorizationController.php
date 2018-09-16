@@ -2,6 +2,7 @@
 
 namespace Kinko\Http\Controllers\Store\Web;
 
+use Exception;
 use Kinko\Models\Client;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
@@ -10,12 +11,11 @@ use Zend\Diactoros\Response as Psr7Response;
 use Psr\Http\Message\ServerRequestInterface;
 use League\OAuth2\Server\AuthorizationServer;
 use Illuminate\Contracts\Routing\ResponseFactory;
-use Laravel\Passport\Http\Controllers\HandlesOAuthErrors;
-use Kinko\Http\Controllers\Store\Web\Concerns\RetrievesAuthRequestFromSession;
+use Kinko\Http\Controllers\Store\Api\Concerns\ConvertsPsrResponses;
 
 class AuthorizationController extends Controller
 {
-    use HandlesOAuthErrors, RetrievesAuthRequestFromSession;
+    use ConvertsPsrResponses;
 
     protected $server;
 
@@ -67,7 +67,7 @@ class AuthorizationController extends Controller
             ]);
         }
 
-        return $this->convertResponse($response);
+        return $this->convertPsrResponse($response);
     }
 
     public function deny(Request $request)
@@ -93,8 +93,21 @@ class AuthorizationController extends Controller
 
         $authRequest->setAuthorizationApproved(true);
 
-        return $this->convertResponse(
+        return $this->convertPsrResponse(
             $this->server->completeAuthorizationRequest($authRequest, new Psr7Response)
         );
+    }
+
+    protected function getAuthRequestFromSession(Request $request)
+    {
+        return tap($request->session()->get('authRequest'), function ($authRequest) use ($request) {
+            if (!$authRequest) {
+                throw new Exception('Authorization request was not present in the session.');
+            }
+
+            $authRequest->setUser($request->user());
+
+            $authRequest->setAuthorizationApproved(true);
+        });
     }
 }

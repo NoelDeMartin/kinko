@@ -9,7 +9,6 @@
         "fideloper/proxy": "^4.0",
         "guzzlehttp/guzzle": "^6.3",
         "laravel/framework": "5.7.*",
-        "laravel/passport": "^7.0",
         "laravel/tinker": "^1.0",
         "league/oauth2-server": "^7.2",
         "symfony/psr-http-message-bridge": "^1.0",
