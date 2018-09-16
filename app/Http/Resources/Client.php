@@ -4,7 +4,7 @@ namespace Kinko\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class Application extends JsonResource
+class Client extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -18,11 +18,14 @@ class Application extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
-            'domain' => $this->domain,
-            'callback_url' => $this->callback_url,
-            'redirect_url' => $this->redirect_url,
+            'homepage_url' => $this->homepage_url,
+            'logo_url' => $this->when(
+                !is_null($this->logo_url),
+                $this->logo_url
+            ),
+            'validated' => $this->validated,
+            'revoked' => $this->revoked,
             'schema' => $this->schema,
-            'client_id' => $this->client_id,
         ];
     }
 }

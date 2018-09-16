@@ -5,8 +5,6 @@ namespace Kinko\Http\Controllers\Store\Web;
 use Kinko\Models\Client;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
-use Laravel\Passport\Passport;
-use Laravel\Passport\Bridge\User;
 use Kinko\Http\Controllers\Controller;
 use Zend\Diactoros\Response as Psr7Response;
 use Psr\Http\Message\ServerRequestInterface;

@@ -2,7 +2,6 @@
 
 namespace Kinko\Models;
 
-use Laravel\Passport\HasApiTokens;
 use Illuminate\Auth\Authenticatable;
 use Kinko\Database\MongoDB\Soukai\Model;
 use League\OAuth2\Server\Entities\UserEntityInterface;
@@ -19,7 +18,6 @@ class User extends Model implements AuthenticatableContract, UserEntityInterface
         return $token;
     }
 
-    use HasApiTokens;
     use Authenticatable;
 
     protected $fillable = [

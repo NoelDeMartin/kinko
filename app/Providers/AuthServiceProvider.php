@@ -43,7 +43,7 @@ class AuthServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register passport models.
+     * Register OAuth services.
      *
      * @return void
      */

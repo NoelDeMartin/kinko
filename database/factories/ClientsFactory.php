@@ -3,8 +3,6 @@
 use Kinko\Models\Client;
 use Faker\Generator as Faker;
 
-use Kinko\Models\Passport\Client as LegacyClient;
-
 $factory->define(Client::class, function (Faker $faker) {
     $domain = $faker->unique->domainName;
 
@@ -16,16 +14,5 @@ $factory->define(Client::class, function (Faker $faker) {
         'redirect_uris' => [
             'https://' . $domain . '/' . $faker->unique->word,
         ],
-    ];
-});
-
-$factory->define(LegacyClient::class, function (Faker $faker) {
-    return [
-        'name' => $faker->unique->word,
-        'secret' => str_random(40),
-        'redirect' => $faker->url,
-        'personal_access_client' => false,
-        'password_client' => false,
-        'revoked' => false,
     ];
 });
