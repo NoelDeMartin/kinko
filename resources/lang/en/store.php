@@ -3,11 +3,10 @@
 return [
 
     'registration' => [
-        'title'        => 'Register new application',
-        'domain'       => 'Domain',
-        'callback_url' => 'Callback Url',
-        'redirect_url' => 'Redirect Url',
+        'title'        => 'Client Authorization',
+        'name'         => 'Name',
         'description'  => 'Description',
+        'homepage_url' => 'Homepage Url',
         'schema'       => 'Schema',
         'submit'       => 'Accept',
     ],

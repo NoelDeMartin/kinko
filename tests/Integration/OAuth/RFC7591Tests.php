@@ -6,7 +6,7 @@ use Kinko\Models\Client;
 
 class RFC7591Tests extends OAuthTestCase
 {
-    public function test_dynamic_client_registration()
+    public function test_create_client()
     {
         $domain = $this->faker->domainName;
         $homeUrl = 'http://' . $domain;
@@ -34,7 +34,35 @@ class RFC7591Tests extends OAuthTestCase
         // TODO add more assertions
     }
 
-    public function test_dynamic_client_registration_error()
+    public function test_redirect_uris_must_have_same_domain()
+    {
+        $domain = $this->faker->domainName;
+
+        $response = $this->post('store/register', [
+            'client_name' => $this->faker->sentence,
+            'client_uri' => 'http://' . $domain,
+            'client_description' => $this->faker->sentence,
+            'redirect_uris' => [
+                'http://' . $domain . '/' . $this->faker->word,
+                'http://' . $this->faker->domainName . '/' . $this->faker->word,
+            ],
+            'token_endpoint_auth_method' => 'none',
+            'grant_types' => [
+                'authorization_code',
+            ],
+            'response_types' => [
+                'code',
+            ],
+            'schema' => file_get_contents(stubs_path('schema.graphql')),
+        ]);
+
+        $response->assertOAuthError(
+            'invalid_client_metadata',
+            'The client uri field must have the same domain as redirect_uris.'
+        );
+    }
+
+    public function test_doesnt_support_private_client()
     {
         $domain = $this->faker->domainName;
         $homeUrl = 'http://' . $domain;

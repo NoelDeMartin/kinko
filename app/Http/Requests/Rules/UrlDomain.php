@@ -55,6 +55,6 @@ class UrlDomain implements Rule
      */
     public function message()
     {
-        return ":attribute must have the same domain as {$this->field}.";
+        return "The :attribute field must have the same domain as {$this->field}.";
     }
 }

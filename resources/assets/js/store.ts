@@ -1,8 +1,8 @@
 import Vue from 'vue';
 
-import ApplicationDetails from './components/ApplicationDetails.vue';
+import ClientDetails from './components/ClientDetails.vue';
 
-Vue.component('application-details', ApplicationDetails);
+Vue.component('client-details', ClientDetails);
 
 Vue.mixin(Vue.extend({
     methods: {

@@ -18,7 +18,7 @@ class GraphQLTests extends TestCase
 
     public function test_validate_schema_and_dont_allow_queries()
     {
-        $this->expectException(Error::class, 'Application schema must not declare queries, mutations nor subscriptions');
+        $this->expectException(Error::class, 'Client schema must not declare queries, mutations nor subscriptions');
 
         GraphQL::parseGraphQLSchema(load_stub('schema_with_query.graphql'), true);
     }

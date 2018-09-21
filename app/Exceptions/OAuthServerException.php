@@ -2,6 +2,8 @@
 
 namespace Kinko\Exceptions;
 
+use Illuminate\Http\Response;
+use Zend\Diactoros\Response as Psr7Response;
 use League\OAuth2\Server\Exception\OAuthServerException as BaseException;
 
 class OAuthServerException extends BaseException
@@ -19,5 +21,16 @@ class OAuthServerException extends BaseException
         }
 
         return $exception;
+    }
+
+    public function render()
+    {
+        $psrResponse = $this->generateHttpResponse(new Psr7Response);
+
+        return new Response(
+            $psrResponse->getBody(),
+            $psrResponse->getStatusCode(),
+            $psrResponse->getHeaders()
+        );
     }
 }

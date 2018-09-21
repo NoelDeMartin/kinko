@@ -9,6 +9,8 @@
             </a>
         </p>
 
+        <client-details :client-json="{{ json_encode($client->resource()->resolve()) }}"></client-details>
+
         <form method="POST" action="{{ route('store.authorize.approve') }}">
             @csrf
 

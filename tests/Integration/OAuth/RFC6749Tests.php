@@ -7,7 +7,6 @@ use Kinko\Models\Client;
 use Defuse\Crypto\Crypto;
 use Kinko\Models\AuthCode;
 use Kinko\Models\AccessToken;
-use Kinko\Models\Application;
 use Kinko\Models\RefreshToken;
 
 /**

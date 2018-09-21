@@ -20,15 +20,19 @@
             </p>
 
             <router-link
-                v-for="application of applications"
-                :key="application.id"
-                :to="'/app/' + application.domain"
-                class="bg-blue hover:bg-blue-dark text-lg text-white font-bold py-2 px-4 mt-2 rounded-full no-underline"
+                v-for="client of clients"
+                :key="client.id"
+                :to="'/client/' + client.id"
+                :class="{
+                    'bg-blue hover:bg-blue-dark ': client.validated,
+                    'bg-grey hover:bg-grey-dark ': !client.validated,
+                }"
+                class="text-lg text-white font-bold py-2 px-4 mt-2 rounded-full no-underline"
             >
-                {{ application.name }}
+                {{ client.name }}
             </router-link>
-            <p v-if="applications.length === 0">
-                No applications.
+            <p v-if="clients.length === 0">
+                No clients.
             </p>
         </template>
     </div>
@@ -37,16 +41,16 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import ApplicationsApi from '@/api/Applications';
+import ClientsApi from '@/api/Clients';
 import CollectionsApi from '@/api/Collections';
 
-import Application from '@/models/Application';
+import Client from '@/models/Client';
 import Collection from '@/models/Collection';
 
 interface Data {
     loading: boolean;
     collections: Collection[];
-    applications: Application[];
+    clients: Client[];
 }
 
 export default Vue.extend({
@@ -54,7 +58,7 @@ export default Vue.extend({
         return {
             loading: true,
             collections: [],
-            applications: [],
+            clients: [],
         };
     },
     computed: {
@@ -67,8 +71,8 @@ export default Vue.extend({
     created() {
         if (!Laravel.serverSide) {
             Promise.all([
-                ApplicationsApi.index().then(applications => {
-                    this.applications = applications;
+                ClientsApi.index().then(clients => {
+                    this.clients = clients;
                 }),
                 CollectionsApi.index().then(collections => {
                     this.collections = collections;

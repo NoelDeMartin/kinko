@@ -1,10 +1,11 @@
-export interface ApplicationJson {
+export interface ClientJson {
+    id: string;
     name: string;
-    domain: string;
-    callback_url: string;
-    redirect_url: string;
     description: string;
+    logo_url?: string;
+    homepage_url: string;
     schema: Schema;
+    validated: boolean;
 }
 
 interface NameNode { value: string; }
@@ -38,26 +39,28 @@ export interface SchemaModelField {
     }>;
 }
 
-export default class Application {
+export default class Client {
 
-    public static fromJson(json: ApplicationJson): Application {
-        return new Application(json);
+    public static fromJson(json: ClientJson): Client {
+        return new Client(json);
     }
 
+    public readonly id: string;
     public readonly name: string;
-    public readonly domain: string;
-    public readonly callbackUrl: string;
-    public readonly redirectUrl: string;
     public readonly description: string;
+    public readonly logoUrl?: string;
+    public readonly homepageUrl: string;
     public readonly schema: Schema;
+    public readonly validated: boolean;
 
-    constructor(json: ApplicationJson) {
+    constructor(json: ClientJson) {
+        this.id = json.id;
         this.name = json.name;
-        this.domain = json.domain;
-        this.callbackUrl = json.callback_url;
-        this.redirectUrl = json.redirect_url;
         this.description = json.description;
+        this.logoUrl = json.logo_url;
+        this.homepageUrl = json.homepage_url;
         this.schema = json.schema;
+        this.validated = json.validated;
     }
 
 }

@@ -27,7 +27,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import { SchemaModelField } from '@/models/Application';
+import { SchemaModelField } from '@/models/Client';
 
 export default Vue.extend({
     props: {

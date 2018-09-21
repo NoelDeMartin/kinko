@@ -2,9 +2,11 @@
 
 namespace Kinko\Http\Requests\Rules;
 
+use Exception;
+use Kinko\Support\Facades\GraphQL;
 use Illuminate\Contracts\Validation\Rule;
 
-class Domain implements Rule
+class ClientSchema implements Rule
 {
     /**
      * Determine if the validation rule passes.
@@ -15,9 +17,13 @@ class Domain implements Rule
      */
     public function passes($attribute, $value)
     {
-        return preg_match("/^([a-z\d](-*[a-z\d])*)(\.([a-z\d](-*[a-z\d])*))*$/i", $value)
-            && preg_match("/^.{1,253}$/", $value)
-            && preg_match("/^[^\.]{1,63}(\.[^\.]{1,63})*$/", $value);
+        try {
+            GraphQL::parseGraphQLSchema($value, true);
+
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     /**
@@ -27,6 +33,6 @@ class Domain implements Rule
      */
     public function message()
     {
-        return 'Invalid domain.';
+        return 'Invalid client schema.';
     }
 }

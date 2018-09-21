@@ -3,7 +3,6 @@
 namespace Kinko\Http\Controllers\Store\Api;
 
 use Kinko\Models\User;
-use Kinko\Models\Application;
 use Kinko\Models\AccessToken;
 use Kinko\Support\Facades\GraphQL;
 use Illuminate\Support\Facades\Auth;

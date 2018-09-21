@@ -193,7 +193,7 @@ class Schema
             isset($typeDefinitions['Mutation']) ||
             isset($typeDefinitions['Subscription'])
         ) {
-            throw new Error('Application schema must not declare queries, mutations nor subscriptions');
+            throw new Error('Client schema must not declare queries, mutations nor subscriptions');
         }
 
         foreach ($this->customTypes as $type) {
