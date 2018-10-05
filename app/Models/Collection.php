@@ -6,5 +6,9 @@ use Kinko\Database\MongoDB\Soukai\Model;
 
 class Collection extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'type'];
+
+    protected $casts = [
+        'type' => 'document',
+    ];
 }

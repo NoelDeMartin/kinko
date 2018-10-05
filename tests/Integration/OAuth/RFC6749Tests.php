@@ -6,6 +6,7 @@ use Kinko\Models\User;
 use Kinko\Models\Client;
 use Defuse\Crypto\Crypto;
 use Kinko\Models\AuthCode;
+use Kinko\Models\Collection;
 use Kinko\Models\AccessToken;
 use Kinko\Models\RefreshToken;
 
@@ -18,10 +19,12 @@ class RFC6749Tests extends OAuthTestCase
 {
     public function test_code_authorization_approval_validates_clients()
     {
+        $schema = load_stub('schema.json');
         $user = factory(User::class)->create();
         $client = factory(Client::class)->create([
             'user_id' => null,
             'validated' => false,
+            'schema' => $schema,
         ]);
         $state = str_random();
 
@@ -54,8 +57,9 @@ class RFC6749Tests extends OAuthTestCase
 
         // TODO validate scopes
 
-        $this->assertTrue($client->fresh()->validated);
-        $this->assertEquals($user->id, $client->fresh()->user_id);
+        $client = $client->fresh();
+        $this->assertTrue($client->validated);
+        $this->assertEquals($user->id, $client->user_id);
 
         $this->assertEquals($client->redirect_uris[0], $redirectUrl);
         $this->assertArrayHasKey('state', $redirectParams);
@@ -63,7 +67,15 @@ class RFC6749Tests extends OAuthTestCase
         $this->assertEquals($state, $redirectParams['state']);
         $this->assertEquals(1, AuthCode::count());
 
+        $this->assertEquals(1, Collection::count());
+
+        $collection = Collection::first();
+        $this->assertNotNull($collection);
+        $this->assertEquals('tasks', $collection->name);
+        $this->assertEquals($schema['definitions'][0], $collection->type);
+
         $authCode = AuthCode::first();
+        $this->assertNotNull($authCode);
         $this->assertEquals($client->id, $authCode->client_id);
         $this->assertEquals($user->id, $authCode->user_id);
         $this->assertFalse($authCode->revoked);

@@ -31,6 +31,9 @@ class RFC7591Tests extends OAuthTestCase
 
         $this->assertEquals(1, Client::count());
 
+        $client = Client::first();
+        $this->assertEquals(load_stub('schema.json'), $client->schema);
+
         // TODO add more assertions
     }
 

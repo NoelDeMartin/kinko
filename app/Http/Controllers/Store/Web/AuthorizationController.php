@@ -6,6 +6,7 @@ use Exception;
 use Kinko\Models\Client;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
+use Kinko\Models\Collection;
 use Kinko\Http\Controllers\Controller;
 use Zend\Diactoros\Response as Psr7Response;
 use Psr\Http\Message\ServerRequestInterface;
@@ -44,6 +45,9 @@ class AuthorizationController extends Controller
 
         $request->session()->put('authRequest', $authRequest);
 
+        // TODO show collisions if any (with existing collection & data)
+        // TODO resolve collision conflicts (if schemas are different)
+
         return view('store.authorize', [
             'client' => $client,
             'user' => $user,
@@ -61,6 +65,22 @@ class AuthorizationController extends Controller
         $client = $authRequest->getClient();
 
         if (!$client->validated) {
+            $types = $client->getSchemaTypes();
+
+            foreach ($types as $name => $typeDefinition) {
+                $collection = strtolower(str_plural($name));
+
+                if (Collection::where('name', $collection)->count() === 0) {
+                    Collection::create([
+                        'name' => $collection,
+                        'type' => $typeDefinition,
+                    ]);
+                } else {
+                    // TODO resolve collision conflicts if any
+                }
+
+            }
+
             $client->update([
                 'validated' => true,
                 'user_id' => $request->user()->id,

@@ -45,4 +45,15 @@ class Client extends Model implements ClientEntityInterface
     {
         return $this->redirect_uris[0];
     }
+
+    public function getSchemaTypes()
+    {
+        $types = [];
+
+        foreach ($this->schema['definitions'] as $typeDefinition) {
+            $types[$typeDefinition['name']['value']] = $typeDefinition;
+        }
+
+        return $types;
+    }
 }
