@@ -5,7 +5,7 @@
 @endpush
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/store.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
 @endpush
 
 @section('main')
@@ -21,5 +21,5 @@
             lang: @json(['store' => trans('store')]),
         };
     </script>
-    <script src="{{ asset('js/store.js') }}"></script>
+    <script src="{{ asset('js/auth.js') }}"></script>
 @endpush

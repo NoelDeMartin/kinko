@@ -1,6 +1,8 @@
-import { createRenderer } from 'vue-server-renderer';
+import '@/bootstrap';
 
-import app from './app';
+import app from '@/app';
+
+import { createRenderer } from 'vue-server-renderer';
 
 const path = process.argv[2];
 

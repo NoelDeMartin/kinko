@@ -1,10 +1,5 @@
 {
     "compilerOptions": {
-        "lib": [
-            "es2017.object",
-            "es6",
-            "dom"
-        ],
         "strict": true,
         "target": "esnext",
         "module": "esnext",
@@ -19,18 +14,13 @@
         "baseUrl": ".",
         "paths": {
             "@/*": [
-                "resources/vue/*"
+                "resources/js/*"
             ],
-            "@js/*": [
-                "resources/assets/js/*"
-            ]
         }
     },
     "include": [
-        "resources/vue/**/*.ts",
-        "resources/vue/**/*.vue",
-        "resources/assets/js/**/*.ts",
-        "resources/assets/js/**/*.vue"
+        "resources/js/**/*.ts",
+        "resources/js/**/*.vue"
     ],
     "exclude": [
         "node_modules"

@@ -1,5 +1,14 @@
+type Lang = { [key: string]: string | Lang };
+
+declare const Laravel: LaravelData;
+
+interface Window {
+    Laravel: LaravelData;
+}
+
 interface LaravelData {
     baseUrl: string,
+    lang?: Lang;
     serverSide?: boolean,
     user?: {
         id: string,
@@ -9,12 +18,6 @@ interface LaravelData {
         created_at: number,
         updated_at: number,
     }
-}
-
-declare const Laravel: LaravelData;
-
-interface Window {
-    Laravel: LaravelData;
 }
 
 declare namespace NodeJS {

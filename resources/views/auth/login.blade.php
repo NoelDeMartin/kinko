@@ -5,25 +5,28 @@
 @endpush
 
 @section('main')
+    <div id="app" class="w-screen h-screen flex flex-col items-center justify-center bg-grey-lighter">
 
-    <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('login') }}" class="form-login">
 
-        @csrf
+            @csrf
 
-        <h1><img src="https://png.icons8.com/color/40/000000/safe.png"> 金庫</h1>
+            <h1><img src="https://png.icons8.com/color/40/000000/safe.png"> 金庫</h1>
 
-        <input type="email" name="email" value="{{ old('email') }}" required autofocus>
+            <input type="email" name="email" value="{{ old('email') }}" required autofocus>
 
-        <input type="password" name="password" required>
+            <input type="password" name="password" required>
 
-        @foreach($errors->all() as $message)
-            <p class="error">{{ $message }}</p>
-        @endforeach
+            @foreach($errors->all() as $message)
+                <p class="error">{{ $message }}</p>
+            @endforeach
 
-        <button type="submit">
-            Login
-        </button>
+            <button type="submit">
+                Login
+            </button>
 
-    </form>
+        </form>
+
+    </div>
 
 @stop

@@ -1,8 +1,8 @@
 import Vue from 'vue';
 
-import ClientDetails from './components/ClientDetails.vue';
+import '@babel/polyfill';
 
-Vue.component('client-details', ClientDetails);
+import '@/filters';
 
 Vue.mixin(Vue.extend({
     methods: {
@@ -19,7 +19,3 @@ Vue.mixin(Vue.extend({
         },
     },
 }));
-
-const app = new Vue();
-
-app.$mount('#app');

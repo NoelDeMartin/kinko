@@ -58,7 +58,7 @@ if (!function_exists('render_vue')) {
     {
         return shell_exec(implode(' ', [
             'node',
-            realpath(base_path('scripts/vue-ssr/render.js')),
+            realpath(base_path('scripts/ssr/render.js')),
             $path,
             escapeshellarg(json_encode(app_laravel_data())),
             '2>&1'

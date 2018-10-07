@@ -46,7 +46,9 @@ export default class Endpoint {
     }
 
     private getApiToken(): string {
-        const token = <HTMLMetaElement> document.head.querySelector('meta[name="api-token"]');
+        const token = document &&
+            document.head &&
+            <HTMLMetaElement> document.head.querySelector('meta[name="api-token"]');
 
         if (token) {
             return token.content;
