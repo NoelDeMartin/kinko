@@ -108,11 +108,11 @@ module.exports = [
         entry: {
             app: [
                 './resources/js/entry-client.ts',
-                './resources/styles/app.scss',
+                './resources/styles/main.scss',
             ],
-            auth: [
-                './resources/js/entry-components.ts',
-                './resources/styles/auth.scss',
+            web: [
+                './resources/js/web.ts',
+                './resources/styles/main.scss',
             ],
         },
         output: {
@@ -123,9 +123,7 @@ module.exports = [
     },
     {
         entry: {
-            render: [
-                './resources/js/entry-server.ts',
-            ],
+            render: './resources/js/entry-server.ts',
         },
         output: {
             path: path.resolve(__dirname, 'scripts/ssr'),

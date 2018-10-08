@@ -2,6 +2,12 @@
 
 return [
 
+    'title' => '金庫',
+
+    'login' => [
+        'submit' => 'Login',
+    ],
+
     'registration' => [
         'title'        => 'Client Authorization',
         'name'         => 'Name',

@@ -2,7 +2,9 @@
     @apply .bg-white .p-4 .rounded .shadow .border-grey .border;
     max-width: 50vw;
 
-    input[type="text"] {
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
         @apply .w-full .bg-white .rounded .border-grey .border .mb-1 .px-3 .py-2;
 
         &:focus {
@@ -27,6 +29,10 @@
 
         }
 
+    }
+
+    p.error {
+        @apply .text-error .mb-2 .text-center;
     }
 
 }

@@ -5,7 +5,7 @@
 @endpush
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/web.css') }}">
 @endpush
 
 @section('main')
@@ -18,8 +18,8 @@
     <script>
         window.Laravel = {
             baseUrl: @json(url('')),
-            lang: @json(['store' => trans('store')]),
+            lang: @json(['kinko' => trans('kinko')]),
         };
     </script>
-    <script src="{{ asset('js/auth.js') }}"></script>
+    <script src="{{ asset('js/web.js') }}"></script>
 @endpush

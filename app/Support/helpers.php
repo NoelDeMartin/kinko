@@ -38,6 +38,7 @@ if (!function_exists('app_laravel_data')) {
         $data = [
             'baseUrl'    => url(''),
             'serverSide' => $serverSide,
+            'lang' => ['kinko' => trans('kinko')],
         ];
 
         if (auth()->check()) {
